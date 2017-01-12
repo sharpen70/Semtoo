@@ -13,15 +13,21 @@ import static org.neo4j.driver.v1.Values.parameters;
 public class ConnectNeo4j {
 	
 	public static void main(String[] args) {
-		Driver driver = GraphDatabase.driver( "bolt://localhost:7687", AuthTokens.basic( "neo4j", "neo4j" ) );
-
+		Driver driver = GraphDatabase.driver( "bolt://localhost:7687", AuthTokens.basic( "neo4j", "123" ) );
+		System.out.println("Connecting to Neo4j");
 		try ( Session session = driver.session() )
 		{
-
+			System.out.println("Entering Session");
+		    try (Transaction tx = session.beginTransaction()) {
+		    	System.out.println("Clearing database");
+		    	tx.run("MATCH (a) DETACH DELETE a");
+		    	tx.success();
+		    }
+		    
 		    try ( Transaction tx = session.beginTransaction() )
 		    {
-		        tx.run( "CREATE (a:Person {name: {name}, title: {title}})",
-		                parameters( "name", "Arthur", "title", "King" ) );
+		        tx.run( "CREATE (a:Person {name: {namd}, title: {title}})",
+		                parameters( "namd", "Arthur", "title", "King" ) );
 		        tx.success();
 		    }
 
