@@ -21,3 +21,6 @@ hs_err_pid*
 
 #maven
 target/
+
+#Experiment results
+test/
