@@ -1,10 +1,7 @@
 package org.semanticweb.semtoo.Graph;
 
-import java.util.HashMap;
 
 import org.neo4j.driver.v1.Transaction;
-import org.semanticweb.owlapi.model.AxiomType;
-import org.semanticweb.owlapi.model.ClassExpressionType;
 import org.semanticweb.owlapi.model.OWLAxiomVisitor;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
@@ -17,7 +14,6 @@ import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 
 public class GraphOntologyVistors {
-	private HashMap<AxiomType<?>, OWLAxiomVisitor> vistors = new HashMap<>();
 	private Neo4jManager m = null;
 	private Transaction tc = null;
 	
@@ -71,14 +67,4 @@ public class GraphOntologyVistors {
 		
 	};
 
-//	private OWLAxiomVisitor classAssertionVistor = new OWLAxiomVisitor() {
-//		public void visit(OWLClassAssertionAxiom axiom) {
-//			
-//		}
-//	};
-//	
-//	{
-//		vistors.put(AxiomType.SUBCLASS_OF, subclassofAxiomVisitor);
-//		vistors.put(AxiomType.CLASS_ASSERTION, classAssertionVistor);
-//	}
 }
