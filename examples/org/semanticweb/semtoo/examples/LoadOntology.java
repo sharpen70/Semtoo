@@ -21,6 +21,7 @@ import org.semanticweb.owlapi.model.OWLObject;
 
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.parameters.Imports;
+import org.semanticweb.semtoo.Graph.GraphManager;
 
 import com.google.common.base.Predicate;
 import com.google.common.io.Files;
@@ -33,21 +34,9 @@ public class LoadOntology {
 		// TODO Auto-generated method stub
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		
-		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(EXAMPLE_IRI);
+		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File("./resources/pizza.owl"));			
 		
-		System.out.println("Axioms of Pizza Ontology");
-		
-		
-		Consumer<OWLAxiom> addToGraph = new Consumer<OWLAxiom>() {
-
-			@Override
-			public void accept(OWLAxiom t) {
-				// TODO Auto-generated method stub
-				
-			}
-		};
-		
-		try {
+//		try {
 //			PrintWriter writer = new PrintWriter("test/pizzaowl", "UTF-8");
 //			Consumer<OWLAxiom> print = (p) -> writer.println(p);						
 //			ontology.axioms().forEach(print);
@@ -55,25 +44,27 @@ public class LoadOntology {
 //			
 //			PrintWriter writer2 = new PrintWriter("test/sigOfpizzaowl", "UTF-8");
 //			ontology.signature().forEach(p -> writer2.println(p));
-
+//
 //			writer2.close();
 //			
 //			PrintWriter writer3 = new PrintWriter("test/classofpizzaowl", "UTF-8");
 //			ontology.classesInSignature().forEach(p -> writer3.println(p));
 //			writer3.close();
-			
-			PrintWriter writer4 = new PrintWriter("test/individualofpizzaowl", "UTF-8");
-			ontology.individualsInSignature().forEach(p -> writer4.println(p));
-			ontology.rboxAxioms(Imports.INCLUDED);
-			writer4.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//			
+//			PrintWriter writer4 = new PrintWriter("test/individualofpizzaowl", "UTF-8");
+//			ontology.individualsInSignature().forEach(p -> writer4.println(p));
+//			ontology.rboxAxioms(Imports.INCLUDED);
+//			writer4.close();
+//		} catch (FileNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (UnsupportedEncodingException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		
+		GraphManager gm = new GraphManager();
+		gm.ontologyToGraph(ontology);
 //		ontology.signature().forEach(System.out::println);
 		
 	}
