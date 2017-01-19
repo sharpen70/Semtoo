@@ -1,16 +1,10 @@
 package org.semanticweb.semtoo.Graph;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.apache.commons.logging.Log;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.Transaction;
-import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLAxiomVisitor;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -29,15 +23,15 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLPairwiseVoidVisitor;
-import org.semanticweb.owlapi.model.OWLPropertyExpressionVisitor;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 import org.semanticweb.semtoo.neo4j.Neo4jUpdate;
 
 public class GraphManager {
+	private Neo4jManager neo4jmanager = null;
 	
-	public GraphManager() {
-		
+	public GraphManager(Neo4jManager m) {
+		neo4jmanager = m;
 	}
 	
 	private boolean isDLLiteClassExp(OWLClassExpression exp) {
@@ -47,10 +41,10 @@ public class GraphManager {
 		return false;
 	}
 	
-	public Predicate<OWLEntity> dl_lite_classEntityOnly = new Predicate<OWLEntity>() {
+	public Predicate<OWLEntity> dl_lite_entityOnly = new Predicate<OWLEntity>() {
 		@Override
 		public boolean test(OWLEntity t) {
-			return t.isOWLClass() || t.isOWLObjectProperty();
+			return t.isOWLClass() || t.isOWLObjectProperty() || t.isOWLNamedIndividual();
 		}
 	};
 	
@@ -94,7 +88,6 @@ public class GraphManager {
 	}
 	
 	public void ontologyToGraph(OWLOntology o) {
-		Neo4jManager neo4jmanager = new Neo4jManager();
 		Session session = neo4jmanager.getSession();
 		
 		long start = System.currentTimeMillis();
@@ -123,7 +116,7 @@ public class GraphManager {
 					Neo4jUpdate.createNode(new GraphNode(idv), tc);
 				}
 			};
-			o.signature().filter(dl_lite_classEntityOnly).forEach(e -> e.accept(entityVisitor));			
+			o.signature().filter(dl_lite_entityOnly).forEach(e -> e.accept(entityVisitor));			
 		}
 		long end = System.currentTimeMillis();
 		System.out.println("Create nodes Transaction closed in " + (end - start) + " ms");
@@ -145,7 +138,6 @@ public class GraphManager {
 					
 					String iri = exp.accept(getExpIRI);
 					
-					//Neo4jUpdate.createNode(new GraphNode(idv), tc);
 					Neo4jUpdate.matchAndcreateRelation(idv.toStringID(), iri, "is", tc);;
 				};
 				public void visit(OWLObjectPropertyAssertionAxiom axiom) {

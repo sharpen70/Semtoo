@@ -10,21 +10,16 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAxiom;
 
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLException;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLObject;
 
 import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.parameters.Imports;
+import org.semanticweb.semtoo.Forgetting;
 import org.semanticweb.semtoo.Graph.GraphManager;
+import org.semanticweb.semtoo.neo4j.Neo4jManager;
 
-import com.google.common.base.Predicate;
-import com.google.common.io.Files;
 
 public class LoadOntology {
 	public static final IRI EXAMPLE_IRI = IRI.create("http://protege.stanford.edu/ontologies/pizza/pizza.owl");
@@ -63,8 +58,13 @@ public class LoadOntology {
 //			e.printStackTrace();
 //		}
 		
-		GraphManager gm = new GraphManager();
-		gm.ontologyToGraph(ontology);
+		Neo4jManager m = new Neo4jManager();
+//		GraphManager gm = new GraphManager(m);
+//		gm.ontologyToGraph(ontology);
+		
+		String conceptIRI = "http://www.co-ode.org/ontologies/pizza/pizza.owl#FourSeasons";
+		Forgetting f = new Forgetting(m);
+		f.forget(conceptIRI);
 //		ontology.signature().forEach(System.out::println);
 		
 	}

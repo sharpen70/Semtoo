@@ -2,17 +2,14 @@ package org.semanticweb.semtoo.Graph;
 
 import java.util.HashMap;
 
-import org.semanticweb.owlapi.model.OWLAnonymousIndividual;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectInverseOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
-import org.semanticweb.owlapi.model.OWLPropertyExpressionVisitor;
 
 
 public class GraphNode {
@@ -60,7 +57,9 @@ public class GraphNode {
 	}
 	
 	public void toNegation() {
-		String new_iri = "Negation_" + _info.get("iri");
+		String iri = _info.get("iri");
+		String new_iri = "Negation_" + iri;
+		_info.put("piri", iri);
 		_info.put("iri", new_iri);
 		_info.put("Negation", "");
 	}
