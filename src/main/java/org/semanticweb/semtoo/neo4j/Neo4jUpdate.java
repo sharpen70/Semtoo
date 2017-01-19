@@ -7,6 +7,8 @@ import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.Values;
 import org.semanticweb.semtoo.Graph.GraphNode;
 
+import com.google.common.reflect.Parameter;
+
 public class Neo4jUpdate {
 
 	public static void createNodes(Collection<GraphNode> nodes, Transaction tc) {
@@ -39,9 +41,13 @@ public class Neo4jUpdate {
 		tc.success();		
 	}
 	
-	public static void createSubOfRelation(String from, String to, Transaction tc) {
-		tc.run("MATCH (a {iri:" + from + "}), (b {iri:" + to + "})");
-		tc.run("CREATE (a)-[:SubOf]->(b)");
+	public static void mergeAndcreateRelation(String from, GraphNode to, String relationLabel, Transaction tc) {
+		tc.run("Match (a:ClassEntity {iri:{a_iri}}) Merge (b:ClassEntity {iri:{b_info}.iri}) SET b = {b_info} CREATE (a)-[:" + relationLabel + "]->(b)", 
+				Values.parameters("a_iri", from, "b_info", to._info));
+		tc.success();
+	}
+	public static void matchAndcreateRelation(String from, String to, String relationLabel, Transaction tc) {
+		tc.run("MATCH (a:ClassEntity {iri:{a_iri}}), (b:ClassEntity {iri:{b_iri}}) CREATE (a)-[:" + relationLabel + "]->(b)", Values.parameters("a_iri", from, "b_iri", to));
 		tc.success();
 	}
 	

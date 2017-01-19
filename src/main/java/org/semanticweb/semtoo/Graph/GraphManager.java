@@ -1,9 +1,11 @@
 package org.semanticweb.semtoo.Graph;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.commons.logging.Log;
 import org.neo4j.driver.v1.Session;
@@ -19,12 +21,14 @@ import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLEntityVisitor;
 import org.semanticweb.owlapi.model.OWLIndividual;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectInverseOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLPairwiseVoidVisitor;
 import org.semanticweb.owlapi.model.OWLPropertyExpressionVisitor;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
@@ -36,18 +40,41 @@ public class GraphManager {
 		
 	}
 	
-	public static Predicate<OWLEntity> dl_lite_classEntityOnly = new Predicate<OWLEntity>() {
+	private boolean isDLLiteClassExp(OWLClassExpression exp) {
+		if(exp instanceof OWLClass) return true;
+		if(exp instanceof OWLObjectSomeValuesFrom) return true;
+		
+		return false;
+	}
+	
+	public Predicate<OWLEntity> dl_lite_classEntityOnly = new Predicate<OWLEntity>() {
 		@Override
 		public boolean test(OWLEntity t) {
 			return t.isOWLClass() || t.isOWLObjectProperty();
 		}
 	};
 	
-	public void createRelations(OWLOntology o, Session session) {
-		try(Transaction tr = session.beginTransaction()) {
+	public Predicate<OWLAxiom> dl_lite_axiomOnly = new Predicate<OWLAxiom>() {
+		public boolean test(OWLAxiom t) {
+			if(!t.isLogicalAxiom()) return false;
 			
-		}
-	}
+			if(t instanceof OWLClassAssertionAxiom) return true;
+			if(t instanceof OWLDisjointClassesAxiom) {
+				for(OWLClassExpression exp : ((OWLDisjointClassesAxiom) t).classExpressions().collect(Collectors.toList())) {
+					if(!isDLLiteClassExp(exp)) return false;
+				}
+				return true;
+			}
+			if(t instanceof OWLSubClassOfAxiom) {
+				OWLClassExpression exp1 = ((OWLSubClassOfAxiom)t).getSubClass();
+				OWLClassExpression exp2 = ((OWLSubClassOfAxiom)t).getSuperClass();
+				
+				return isDLLiteClassExp(exp1) && isDLLiteClassExp(exp2);
+			}
+			if(t instanceof OWLObjectPropertyAssertionAxiom) return true;
+			return false;
+		};
+	};
 	
 	private OWLClassExpressionVisitorEx<String> getExpIRI = new OWLClassExpressionVisitorEx<String>() {
 		public String visit(OWLClass ce) {
@@ -56,11 +83,15 @@ public class GraphManager {
 		
 		public String visit(OWLObjectSomeValuesFrom svf) {
 			OWLObjectPropertyExpression exp = svf.getProperty();
-
-			if(exp instanceof OWLObjectInverseOf) return GraphNode.property_nodeType.invPRctClass + "_" + ((OWLObjectInverseOf)exp).getNamedProperty().getIRI().toString();
-			else return GraphNode.property_nodeType.PRctClass + "_" + ((OWLObjectProperty)exp).getIRI().toString();						
+			
+			return getPRctClassIRI(exp);				
 		}
 	};
+	
+	private String getPRctClassIRI(OWLObjectPropertyExpression exp) {
+		if(exp instanceof OWLObjectInverseOf) return GraphNode.property_nodeType.invPRctClass + "_" + ((OWLObjectInverseOf)exp).getNamedProperty().getIRI().toString();
+		else return GraphNode.property_nodeType.PRctClass + "_" + ((OWLObjectProperty)exp).getIRI().toString();	
+	}
 	
 	public void ontologyToGraph(OWLOntology o) {
 		Neo4jManager neo4jmanager = new Neo4jManager();
@@ -79,10 +110,7 @@ public class GraphManager {
 		try(Transaction tc = session.beginTransaction()) {
 			OWLEntityVisitor entityVisitor = new OWLEntityVisitor() {
 				public void visit(OWLClass ce) {
-					System.out.println(ce);
-					GraphNode node = new GraphNode(ce);
-					
-					Neo4jUpdate.createNode(node, tc);
+					Neo4jUpdate.createNode(new GraphNode(ce), tc);
 				};
 				public void visit(OWLObjectProperty property) {
 					GraphNode node = new GraphNode(property, GraphNode.property_nodeType.PRctClass);
@@ -91,6 +119,9 @@ public class GraphManager {
 					Neo4jUpdate.createNode(node, tc);
 					Neo4jUpdate.createNode(inode, tc);
 				};
+				public void visit(OWLNamedIndividual idv) {
+					Neo4jUpdate.createNode(new GraphNode(idv), tc);
+				}
 			};
 			o.signature().filter(dl_lite_classEntityOnly).forEach(e -> e.accept(entityVisitor));			
 		}
@@ -104,6 +135,8 @@ public class GraphManager {
 		}		
 		
 		//Build relations between Nodes according Tbox Axioms
+		System.out.println("Creating relations between nodes according to axioms ...");
+		start = System.currentTimeMillis();
 		try(Transaction tc = session.beginTransaction()) {
 			OWLAxiomVisitor visitor = new OWLAxiomVisitor() {
 				public void visit(OWLClassAssertionAxiom axiom) {
@@ -112,21 +145,41 @@ public class GraphManager {
 					
 					String iri = exp.accept(getExpIRI);
 					
-					Neo4jUpdate.createNode(new GraphNode(idv), tc);
-					Neo4jUpdate.createSubOfRelation(idv.toStringID(), iri, tc);;
-				};
-				public void visit(OWLDisjointClassesAxiom axiom) {
-					
-				};
-				public void visit(OWLSubClassOfAxiom axiom) {
-					
+					//Neo4jUpdate.createNode(new GraphNode(idv), tc);
+					Neo4jUpdate.matchAndcreateRelation(idv.toStringID(), iri, "is", tc);;
 				};
 				public void visit(OWLObjectPropertyAssertionAxiom axiom) {
+					String subject_iri = axiom.getSubject().toStringID();
+					String object_iri = axiom.getObject().toStringID();
 					
+					String p_iri = getPRctClassIRI(axiom.getProperty());
+					String ip_iri = getPRctClassIRI(axiom.getProperty().getInverseProperty());
+					
+					Neo4jUpdate.matchAndcreateRelation(subject_iri, p_iri, "is", tc);
+					Neo4jUpdate.matchAndcreateRelation(object_iri, ip_iri, "is", tc);
 				}
+				public void visit(OWLDisjointClassesAxiom axiom) {
+					OWLPairwiseVoidVisitor<OWLClassExpression> visitor = new OWLPairwiseVoidVisitor<OWLClassExpression>() {
+						@Override
+						public void visit(OWLClassExpression a, OWLClassExpression b) {
+							String a_iri = a.accept(getExpIRI);
+							GraphNode negationNode = GraphNode.getNode(b);
+							negationNode.toNegation();
+							Neo4jUpdate.mergeAndcreateRelation(a_iri, negationNode, "SubOf", tc);
+						}
+					};
+					axiom.forEach(visitor);
+				};
+				public void visit(OWLSubClassOfAxiom axiom) {
+					String sub_iri = axiom.getSubClass().accept(getExpIRI);
+					String super_iri = axiom.getSuperClass().accept(getExpIRI);
+					Neo4jUpdate.matchAndcreateRelation(sub_iri, super_iri, "SubOf", tc);
+				};
 			};
-			o.axioms().filter(a -> a.isLogicalAxiom()).forEach(a -> a.accept(visitor));
+			o.axioms().filter(dl_lite_axiomOnly).forEach(a -> a.accept(visitor));
 		}
+		end = System.currentTimeMillis();
+		System.out.println("Create relations Transaction closed in " + (end - start) + " ms");
 		
 		session.close();
 		neo4jmanager.close();
