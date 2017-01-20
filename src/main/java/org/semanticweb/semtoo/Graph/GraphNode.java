@@ -1,6 +1,9 @@
 package org.semanticweb.semtoo.Graph;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
@@ -13,9 +16,37 @@ import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 
 
 public class GraphNode {
-	public HashMap<String, String> _info = new HashMap<>();
+	public Map<String, Object> info = new HashMap<>();
+	public Set<String> labels = new HashSet<>();
 	
-	public static enum property_nodeType {P, invP, PRctClass, invPRctClass};
+	//public static enum property_nodeType {P, invP, PRctClass, invPRctClass};
+	
+	public static enum NODE_TYPE {
+		PropertyRestrictionClass("PRctCls"),
+		InverseOfPropertyRestrictionClass("invPRctCls"),
+		AtomicClass("AtomicCls"),
+		NamedIndividual("NamedIdv"),
+		AnonymousIndividual("AnonyIdv");
+		
+		private String value;
+		
+		private NODE_TYPE(String t) {
+			value = t;
+		}
+		
+		@Override
+		public String toString() {
+			return value;
+		}
+	}
+	
+	public static class NODE_KEY {
+		public static final String NODE_IRI = "iri";
+		public static final String NODE_DESCRIBTION = "description";
+		public static final String NODE_TYPE = "type";
+		public static final String POSITIVE_NODE_IRI = "piri";
+		public static final String PROPERTY_IRI = "ppiri";		
+	}
 	
 	//This string name is for identification in relation creation of neo4j
 	public String neo4jName = null;
@@ -25,10 +56,10 @@ public class GraphNode {
 			throw new RuntimeException("The number of Parameters has to be even");
 		}
 		
-		this._info = new HashMap<String, String>();
+		this.info = new HashMap<String, Object>();
 		
 		for(int i = 0; i < info.length - 1; i += 2) {
-			this._info.put(info[i], info[i + 1]);
+			this.info.put(info[i], info[i + 1]);
 		}
 	}
 	
@@ -39,37 +70,39 @@ public class GraphNode {
 		//Temporary Solution, need to revise in the future
 		neo4jName = description;
 		
-		_info.put("iri", iri);		
-		_info.put("description", description);		
-		_info.put("type", "AtomicClass");
+		info.put(NODE_KEY.NODE_IRI, iri);		
+		info.put(NODE_KEY.NODE_DESCRIBTION, description);		
+		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.AtomicClass);
 	}
 	
-	public GraphNode(OWLObjectProperty p, property_nodeType t) {
+	public GraphNode(OWLObjectProperty p, NODE_TYPE t) {
 		String iri = p.getIRI().toString();
 		String[] iri_s = iri.split("#");
 		
 		//Temporary Solution, need to revise in the future
 		neo4jName = t + "_" + iri_s[1];
 		
-		_info.put("iri", t + "_" + iri);
-		_info.put("description", neo4jName);		
-		_info.put("type", "PropertyRestrictionClass");
+		info.put(NODE_KEY.NODE_IRI, t + "_" + iri);
+		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
+		info.put(NODE_KEY.PROPERTY_IRI, iri);
+		info.put(NODE_KEY.NODE_TYPE, t.toString());
 	}
 	
 	public void toNegation() {
-		String iri = _info.get("iri");
+		Object iri = info.get(NODE_KEY.NODE_IRI);
 		String new_iri = "Negation_" + iri;
-		_info.put("piri", iri);
-		_info.put("iri", new_iri);
-		_info.put("Negation", "");
+		
+		info.put(NODE_KEY.POSITIVE_NODE_IRI, iri);
+		info.put(NODE_KEY.NODE_IRI, new_iri);
+		info.put("Negation", "");
 	}
 	
 	public static GraphNode getNode(OWLClassExpression svf) {
 		if(svf instanceof OWLObjectSomeValuesFrom) {
 			OWLObjectPropertyExpression exp = ((OWLObjectSomeValuesFrom)svf).getProperty();
 		
-			if(exp instanceof OWLObjectInverseOf) return new GraphNode(((OWLObjectInverseOf)exp).getNamedProperty(), property_nodeType.invPRctClass);
-			else return new GraphNode((OWLObjectProperty)exp, property_nodeType.PRctClass);	
+			if(exp instanceof OWLObjectInverseOf) return new GraphNode(((OWLObjectInverseOf)exp).getNamedProperty(), NODE_TYPE.InverseOfPropertyRestrictionClass);
+			else return new GraphNode((OWLObjectProperty)exp, NODE_TYPE.PropertyRestrictionClass);	
 		}
 		if(svf instanceof OWLClass) {
 			return new GraphNode((OWLClass)svf);
@@ -79,23 +112,20 @@ public class GraphNode {
 	}		
 	
 	public GraphNode(OWLIndividual idv) {
+		String iri = idv.toStringID();
+		info.put(NODE_KEY.NODE_IRI, iri);
+		
 		if(idv instanceof OWLNamedIndividual) {
-			String iri = idv.toStringID();
 			//Temporary Solution, need to revise in the future
 			neo4jName = iri.split("#")[1];
-			
-			_info.put("iri", iri);
-			_info.put("description", neo4jName);
-			_info.put("type", "NamedIndividual");
+			info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.NamedIndividual);
 		}
 		else {
-			String iri = idv.toStringID();
 			//Temporary Solution, need to revise in the future
 			neo4jName = iri;
-			
-			_info.put("iri", iri);
-			_info.put("description", neo4jName);
-			_info.put("type", "AnonymousIndividual");
+			info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.AnonymousIndividual);
 		}
+		
+		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
 	}	
 }
