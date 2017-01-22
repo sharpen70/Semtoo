@@ -7,6 +7,7 @@ import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.Values;
+import org.semanticweb.semtoo.model.GraphNode;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 import org.semanticweb.semtoo.neo4j.Neo4jUpdate;
 
@@ -55,10 +56,13 @@ public class Forgetting {
 			}
 			try(Transaction tc = session.beginTransaction()) {
 				String statement = "MATCH (a)-[:SubOf*2..]->(b), " +
-								   "(a)-[:SubOf]->(f1 {forget:true}), " +
+								   "(a)-[r:SubOf|is]->(f1 {forget:true}), " +
 								   "(f2 {forget:true})-[:SubOf]->(b) " +
 								   "WHERE NOT exists(a.forget) AND NOT exists(b.forget) " +
-								   "CREATE (a)-[:SubOf]->(b)";
+								   "CREATE (a)-[r]->(b)";
+//								   "FOREACH(ignore in CASE type(r) WHEN \"SubOf\" THEN [1] ELSE [] END | CREATE (a)-[:SubOf]->(b)) " +
+//								   "FOREACH(ignore in CASE type(r) WHEN \"is\" THEN [1] ELSE [] END | CREATE (a)-[:is]->(b))";
+				
 				tc.run(statement);
 				tc.success();
 			}
@@ -94,7 +98,7 @@ public class Forgetting {
 	
 	//Check if the given class A has axiom of form Disjoint(A, A)
 	private boolean isContradictionClass(String classIRI, Session session) {
-		String neg_iri = "Negation_" + classIRI;
+		String neg_iri = GraphNode.NEG_PREFIX + classIRI;
 		String execString = "MATCH (a {iri:{iri}})-[:SubOf]->(b {iri:{neg_iri}}) RETURN a";
 		
 		try(Transaction tc = session.beginTransaction()) {
@@ -110,27 +114,27 @@ public class Forgetting {
 				      + "MERGE (na {piri:a.iri}) ON CREATE na.iri = {neg} + a.iri, na.piri = a.iri "
 					  + "CREATE (a)-[:SubOf]->(na) "
 					  + "DETACH DELETE b";
-		tc.run(exec, Values.parameters("iri", classIRI, "neg", "Negation_"));
+		tc.run(exec, Values.parameters("iri", classIRI, "neg", GraphNode.NEG_PREFIX));
 		tc.success();
 	}
 	
 	//Given class A to forget, change all B -> ~A to A -> ~B
 	private void changeNegationDirection(String classIRI, Transaction tc) {
-		String neg_iri = "Negation_" + classIRI;
+		String neg_iri = GraphNode.NEG_PREFIX + classIRI;
 		String execString = "MATCH (a)-[r:SubOf]->(nb {iri:{neg_iri}}) DELETE r DETACH DELETE nb " +
 						   "MERGE (na {piri:a.iri}) ON CREATE na.iri = {neg} + a.iri, na.piri = a.iri " +
 						   "WITH a " +
 						   "MATCH (b {iri:{iri}})" +
 						   "CREATE (b)-[:SubOf]->(a)";
-		tc.run(execString, Values.parameters("neg_iri", neg_iri, "neg", "Negation_", "iri", classIRI));
+		tc.run(execString, Values.parameters("neg_iri", neg_iri, "neg", GraphNode.NEG_PREFIX, "iri", classIRI));
 		tc.success();
 	}
 	
 	//Build relations go through class A and remove class A
 	private void eliminateClass(String classIRI, Transaction tc) {
-		String exeString = "MATCH (a)-[:SubOf]->(remove {iri:{iri}})-[:SubOf]->(b)"
-						+ " CREATE (a)-[:SubOf]->(b)"
-						+ " DETACH DELETE remove";
+		String exeString = "MATCH (a)-[r:SubOf|is]->(remove {iri:{iri}})-[:SubOf]->(b) "
+						+ "CREATE (a)-[r]->(b) "
+						+ "DETACH DELETE remove";
 		tc.run(exeString, Values.parameters("iri", classIRI));
 		tc.success();
 	}
