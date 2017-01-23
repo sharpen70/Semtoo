@@ -80,7 +80,7 @@ public class GraphManager {
 			String p_iri = GraphNode.getPropertyIRI(property);
 			String ip_iri = GraphNode.getPropertyIRI(property.getInverseProperty());
 			
-			String statement1 = "Match (subject_object {{iri}:{so_iri}}), (p {{iri}:{p_iri}}), "
+			String statement1 = "MATCH (subject_object {{iri}:{so_iri}}), (p {{iri}:{p_iri}}), "
 					+ "(object_subject {{iri}:{os_iri}}), (ip {{iri}:{ip_iri}}) "
 					+ "CREATE (subject_object)-[:is]->(p), (object_subject)-[:is]->(ip)";
 			
@@ -92,7 +92,7 @@ public class GraphManager {
 			String rp_iri = GraphNode.getPRctClassIRI(property);
 			String rip_iri = GraphNode.getPRctClassIRI(property.getInverseProperty());
 			
-			String statement2 = "Match (subject {{iri}:{siri}}), (p {{iri}:{piri}}), "
+			String statement2 = "MATCH (subject {{iri}:{siri}}), (p {{iri}:{piri}}), "
 					+ "(object {{iri}:{oiri}}) (ip {{iri}:{ipiri}}) "
 					+ "CREATE (subject)-[:is]->(p), (object)-[:is]->(ip)";
 			
@@ -105,10 +105,9 @@ public class GraphManager {
 				@Override
 				public void visit(OWLClassExpression a, OWLClassExpression b) {
 					String a_iri = a.accept(getExpIRI);
-					GraphNode negationNode = GraphNode.getGraphNode(b);
-					negationNode.toNegation();
+					GraphNode negationNode = GraphNode.getClassNodeByClassExpression(b, true);
 					
-					tc.run("Match (a {iri:{a_iri}}) Merge (b:" + GraphNode.NODE_LABEL.NEGATION + " {iri:{b_info}.iri}) "
+					tc.run("MATCH (a {iri:{a_iri}}) MERGE (b {iri:{b_info}.iri}) "
 							+ "ON CREATE SET b:" + GraphNode.NODE_LABEL.NEGATION + ", b = {b_info} CREATE (a)-[:SubOf]->(b)", 
 							Values.parameters("a_iri", a_iri, "b_info", negationNode.info));
 					tc.success();
@@ -126,9 +125,9 @@ public class GraphManager {
 				@Override
 				public void visit(OWLClassExpression a, OWLClassExpression b) {
 					String a_iri = a.accept(getExpIRI);
-					String b_iri = a.accept(getExpIRI);
+					String b_iri = b.accept(getExpIRI);
 					
-					tc.run("Match (a {iri:{a_iri}}), (b {iri:{b_iri}}) CREATE (a)-[:SubOf]->(b), (b)-[:SubOf]->(a)",
+					tc.run("MATCH (a {iri:{a_iri}}), (b {iri:{b_iri}}) CREATE (a)-[:SubOf]->(b) CREATE (b)-[:SubOf]->(a)",
 							Values.parameters("a_iri", a_iri, "b_iri", b_iri));
 					tc.success();
 				}
@@ -139,16 +138,56 @@ public class GraphManager {
 			OWLObjectPropertyExpression subp = axiom.getSubProperty();
 			OWLObjectPropertyExpression superp = axiom.getSuperProperty();
 			
+			String subp_iri = GraphNode.getPropertyIRI(subp);
+			String superp_iri = GraphNode.getPropertyIRI(superp);
+			String i_subp_iri = GraphNode.getPropertyIRI(subp.getInverseProperty());
+			String i_superp_iri = GraphNode.getPropertyIRI(superp.getInverseProperty());
 			
-			if(subp.getClass().equals(superp.getClass())) {
-				
-			}
-			else {
-				
-			}
+			Neo4jUpdate.matchAndcreateRelation(subp_iri, superp_iri, "SubOf", tc);
+			Neo4jUpdate.matchAndcreateRelation(i_subp_iri, i_superp_iri, "SubOf", tc);
+			
+			String rt_subp_iri = GraphNode.getPRctClassIRI(subp);
+			String rt_superp_iri = GraphNode.getPRctClassIRI(superp);
+			String rt_i_subp_iri = GraphNode.getPRctClassIRI(subp.getInverseProperty());
+			String rt_i_superp_iri = GraphNode.getPRctClassIRI(superp.getInverseProperty());
+			
+			Neo4jUpdate.matchAndcreateRelation(rt_subp_iri, rt_superp_iri, "SubOf", tc);
+			Neo4jUpdate.matchAndcreateRelation(rt_i_subp_iri, rt_i_superp_iri, "SubOf", tc);
 		};
 		public void visit(OWLDisjointObjectPropertiesAxiom axiom) {
+			OWLPairwiseVoidVisitor<OWLObjectPropertyExpression> _vistor = new OWLPairwiseVoidVisitor<OWLObjectPropertyExpression>() {
+				@Override
+				public void visit(OWLObjectPropertyExpression a, OWLObjectPropertyExpression b) {
+					GraphNode nb_node = GraphNode.getPropertyNodeByExpession(b, true);
+					GraphNode nib_node = GraphNode.getPropertyNodeByExpession(b.getInverseProperty(), true);
+					String a_iri = GraphNode.getPropertyIRI(a);
+					String ia_iri = GraphNode.getPropertyIRI(a.getInverseProperty());
+					
+					String statement1 = "MATCH (a {{iri}:{a_iri}}) MATCH (ia {{iri}:{ia_iri}}) "
+									+ "MERGE (nb {{iri}:{nb_info}.{iri}}) ON CREATE SET nb:" + GraphNode.NODE_LABEL.NEGATION + ", nb = {nb_info} "
+									+ "MERGE (nib {{iri}:{nib_info}.{iri}}) ON CREATE SET nib:" + GraphNode.NODE_LABEL.NEGATION + ", nib = {nib_info} "
+									+ "CREATE (a)-[:SubOf]->(nb), (ia)-[:SubOf]->(nib)";
+					
+					tc.run(statement1, Values.parameters("iri", NODE_KEY.NODE_IRI, "a_iri", a_iri, 
+							"ia_iri", ia_iri, "nb_info", nb_node.info, "nib_info", nib_node.info));
+					tc.success();
+					
+					GraphNode nrb_node = GraphNode.getRestrictionNodeByExpression(b, true);
+					GraphNode nrib_node = GraphNode.getRestrictionNodeByExpression(b.getInverseProperty(), true);
+					String ra_iri = GraphNode.getPRctClassIRI(a);
+					String ria_iri = GraphNode.getPRctClassIRI(a.getInverseProperty());
+					
+					String statement2 = "MATCH (ra {{iri}:{ra_iri}}) MATCH (ria {{iri}:{ria_iri}}) "
+							+ "MERGE (nrb {{iri}:{nrb_info}.{iri}}) ON CREATE SET nrb:" + GraphNode.NODE_LABEL.NEGATION + ", nrb = {nrb_info} "
+							+ "MERGE (nrib {{iri}:{nrib_info}.{iri}}) ON CREATE SET nrib:" + GraphNode.NODE_LABEL.NEGATION + ", nrib = {nrib_info} "
+							+ "CREATE (ra)-[:SubOf]->(nrb), (ria)-[:SubOf]->(nrib)";
 			
+					tc.run(statement2, Values.parameters("iri", NODE_KEY.NODE_IRI, "ra_iri", ra_iri,
+					"ria_iri", ria_iri, "nrb_info", nrb_node.info, "nrib_info", nrib_node.info));
+					tc.success();
+				}
+			};
+			axiom.forEach(_vistor);
 		};
 	}
 	

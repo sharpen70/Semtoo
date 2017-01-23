@@ -8,6 +8,9 @@ import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.Values;
 import org.semanticweb.semtoo.model.GraphNode;
+import org.semanticweb.semtoo.model.GraphNode.NODE_KEY;
+import org.semanticweb.semtoo.model.GraphNode.NODE_LABEL;
+import org.semanticweb.semtoo.model.GraphNode.NODE_TYPE;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 import org.semanticweb.semtoo.neo4j.Neo4jUpdate;
 
@@ -110,23 +113,27 @@ public class Forgetting {
 	
 	//Remove the contradiction class and make its subclasses contradiction class
 	private void removeContradictionClass(String classIRI, Transaction tc) {
-		String exec = "MATCH (a)-[:SubOf]->(b {iri:{iri}}) "
-				      + "MERGE (na {piri:a.iri}) ON CREATE na.iri = {neg} + a.iri, na.piri = a.iri "
+		
+		String exec = "MATCH (a)-[:SubOf]->(b {iri:{biri}}) "
+				      + "MERGE (na {{piri}:a.{iri}}) ON CREATE SET na:{negation} "
+				      + "na.{iri} = {neg} + a.{iri}, na.{piri} = a.{iri}, na.{nodetype} = a.{nodetype} "
 					  + "CREATE (a)-[:SubOf]->(na) "
 					  + "DETACH DELETE b";
-		tc.run(exec, Values.parameters("iri", classIRI, "neg", GraphNode.NEG_PREFIX));
+		tc.run(exec, Values.parameters("biri", classIRI, "iri", NODE_KEY.NODE_IRI, "negation", NODE_LABEL.NEGATION, 
+				"piri", NODE_KEY.POSITIVE_NODE_IRI, "neg", GraphNode.NEG_PREFIX, "nodetype", NODE_KEY.NODE_TYPE));
 		tc.success();
 	}
 	
 	//Given class A to forget, change all B -> ~A to A -> ~B
 	private void changeNegationDirection(String classIRI, Transaction tc) {
 		String neg_iri = GraphNode.NEG_PREFIX + classIRI;
-		String execString = "MATCH (a)-[r:SubOf]->(nb {iri:{neg_iri}}) DELETE r DETACH DELETE nb " +
-						   "MERGE (na {piri:a.iri}) ON CREATE na.iri = {neg} + a.iri, na.piri = a.iri " +
-						   "WITH a " +
-						   "MATCH (b {iri:{iri}})" +
-						   "CREATE (b)-[:SubOf]->(a)";
-		tc.run(execString, Values.parameters("neg_iri", neg_iri, "neg", GraphNode.NEG_PREFIX, "iri", classIRI));
+		String execString = "MATCH (a)-[r:SubOf]->(nb {{iri}:{neg_iri}}) DELETE r " +
+						   "MERGE (na {{piri}:a.{iri}}) ON CREATE SET na.{iri} = {neg} + a.{iri}, na.{piri} = a.{iri} " +
+						   "WITH na " +
+						   "MATCH (b {{iri}:{b_iri}}) " +
+						   "CREATE (b)-[:SubOf]->(na)";
+		tc.run(execString, Values.parameters("neg_iri", neg_iri, "iri", NODE_KEY.NODE_IRI, "piri", NODE_KEY.POSITIVE_NODE_IRI,
+				 "neg", GraphNode.NEG_PREFIX, "b_iri", classIRI));
 		tc.success();
 	}
 	

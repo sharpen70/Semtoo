@@ -1,6 +1,7 @@
 package org.semanticweb.semtoo.tools;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -96,6 +97,10 @@ public class DLliteFilter implements Predicate<OWLAxiom> {
 		};
 		
 		public Boolean visit(OWLEquivalentClassesAxiom axiom) {
+			List<OWLClassExpression> exps = axiom.classExpressions().collect(Collectors.toList());
+			for(OWLClassExpression e : exps) {
+				if(!isDLLiteClassExp(e)) return false;
+			}
 			return true;
 		};
 		

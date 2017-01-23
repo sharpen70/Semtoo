@@ -1,4 +1,4 @@
 package org.semanticweb.semtoo;
 
-public interface QueryAnswering {
+public interface ICTolerant_QA {
 }

@@ -86,24 +86,26 @@ public class GraphNode {
 		else return GraphNode.PRT_PREFIX + piri;	
 	}
 	
-	public GraphNode(OWLClass c) {
-		String iri = c.getIRI().toString();
-		String description = iri.split("#")[1];
-		
-		//Temporary Solution, need to revise in the future
-		neo4jName = description;
+	public GraphNode(OWLIndividual idv) {
+		String iri = idv.toStringID();
 		
 //		labels.add(NODE_LABEL.OWLENTITY);
 		
-		info.put(NODE_KEY.NODE_IRI, iri);		
-		info.put(NODE_KEY.NODE_DESCRIBTION, description);		
-		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.AtomicClass);
+		info.put(NODE_KEY.NODE_IRI, iri);
+		neo4jName = iri.split("#")[1];
+		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.NamedIndividual);
+		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
 	}
 	
-	public static GraphNode getGraphNode(OWLClassExpression exp) {
-		if(exp instanceof OWLObjectSomeValuesFrom) return new GraphNode((OWLObjectSomeValuesFrom)exp);
-		else if(exp instanceof OWLClass) return new GraphNode((OWLClass)exp);
-		else return null;
+	public GraphNode(OWLIndividual a, OWLIndividual b) {
+		String a_iri = a.toStringID();
+		String b_iri = b.toStringID();
+		
+		neo4jName = a_iri.split("#")[1] + "_" + b_iri.split("#")[1];
+		info.put(NODE_KEY.SUBJECT_IRI, a_iri);
+		info.put(NODE_KEY.OBJECT_IRI, b_iri);
+		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.DualIndividual);
+		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
 	}
 	
 	public GraphNode(OWLObjectProperty p, boolean restriction, boolean inverse) {
@@ -140,53 +142,103 @@ public class GraphNode {
 		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
 	}
 	
-	public GraphNode(OWLObjectPropertyExpression p) {
-		String iri = p.getNamedProperty().toStringID();
-		String t;
+	public GraphNode(OWLClass c) {
+		String iri = c.getIRI().toString();
+		String description = iri.split("#")[1];
+		
+		//Temporary Solution, need to revise in the future
+		neo4jName = description;
 		
 //		labels.add(NODE_LABEL.OWLENTITY);
 		
-		if(p instanceof OWLObjectInverseOf) {
-			t = NODE_TYPE.InverseOfPropertyRestrictionClass;
-			neo4jName =  PRT_PREFIX + INV_PREFIX + iri.split("#")[1];
-			info.put(NODE_KEY.NODE_IRI, t + "_" + iri);
-		}
-		else {
-			t = NODE_TYPE.PropertyRestrictionClass;
-			neo4jName =  PRT_PREFIX + iri.split("#")[1];
-		}
-		
-		neo4jName = t + "_" + iri.split("#")[1];
-		
-		info.put(NODE_KEY.NODE_IRI, t + "_" + iri);
-		info.put(NODE_KEY.NODE_TYPE, t.toString());
-		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
-		info.put(NODE_KEY.PROPERTY_IRI, iri);
+		info.put(NODE_KEY.NODE_IRI, iri);		
+		info.put(NODE_KEY.NODE_DESCRIBTION, description);		
+		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.AtomicClass);
 	}
 	
-	public GraphNode(OWLObjectSomeValuesFrom svf) {
-		OWLObjectPropertyExpression p = svf.getProperty();
+	public static GraphNode getRestrictionNodeByExpression(OWLObjectPropertyExpression exp, boolean negation) {
+		OWLObjectProperty p = exp.getNamedProperty();
+		GraphNode n;
 		
-//		labels.add(NODE_LABEL.OWLENTITY);
+		if(exp instanceof OWLObjectInverseOf) n = new GraphNode(p, true, true);
+		else n = new GraphNode(p, true, false);
 		
-		String iri = p.getNamedProperty().toStringID();;
-		if(p instanceof OWLObjectInverseOf) {
-			neo4jName = NODE_TYPE.InverseOfPropertyRestrictionClass + "_" + iri.split("#")[1];
-			
-			info.put(NODE_KEY.NODE_IRI, NODE_TYPE.InverseOfPropertyRestrictionClass + "_" + iri);
-			info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.InverseOfPropertyRestrictionClass);
-		}
-		else {
-			neo4jName = NODE_TYPE.PropertyRestrictionClass + "_" + iri.split("#")[1];
-			
-			info.put(NODE_KEY.NODE_IRI,  NODE_TYPE.PropertyRestrictionClass + "_" + iri);
-			info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.PropertyRestrictionClass);
-		}
-		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
-		info.put(NODE_KEY.PROPERTY_IRI, iri);
+		if(negation) n.toNegation();
+		
+		return n;
 	}
 	
-	public void toNegation() {
+	public static GraphNode getClassNodeByClassExpression(OWLClassExpression exp, boolean negation) {
+		GraphNode n = null;
+		
+		if(exp instanceof OWLObjectSomeValuesFrom) n = 
+				getRestrictionNodeByExpression(((OWLObjectSomeValuesFrom)exp).getProperty(), negation);
+		else if(exp instanceof OWLClass) {
+			n = new GraphNode((OWLClass)exp);
+			if(negation) n.toNegation();
+		}
+		
+		return n;
+	}
+	
+	public static GraphNode getPropertyNodeByExpession(OWLObjectPropertyExpression exp, boolean negation) {
+		GraphNode n = null;
+		OWLObjectProperty p = exp.getNamedProperty();
+		
+		if(exp instanceof OWLObjectInverseOf) n = new GraphNode(p, false, true);
+		else n = new GraphNode(p, false, false);
+		
+		if(negation) n.toNegation();
+		
+		return n;
+	}
+//	public GraphNode(OWLObjectPropertyExpression p) {
+//		String iri = p.getNamedProperty().toStringID();
+//		String t;
+//		
+////		labels.add(NODE_LABEL.OWLENTITY);
+//		
+//		if(p instanceof OWLObjectInverseOf) {
+//			t = NODE_TYPE.InverseOfPropertyRestrictionClass;
+//			neo4jName =  PRT_PREFIX + INV_PREFIX + iri.split("#")[1];
+//			info.put(NODE_KEY.NODE_IRI, t + "_" + iri);
+//		}
+//		else {
+//			t = NODE_TYPE.PropertyRestrictionClass;
+//			neo4jName =  PRT_PREFIX + iri.split("#")[1];
+//		}
+//		
+//		neo4jName = t + "_" + iri.split("#")[1];
+//		
+//		info.put(NODE_KEY.NODE_IRI, t + "_" + iri);
+//		info.put(NODE_KEY.NODE_TYPE, t.toString());
+//		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
+//		info.put(NODE_KEY.PROPERTY_IRI, iri);
+//	}
+	
+//	public GraphNode(OWLObjectSomeValuesFrom svf) {
+//		OWLObjectPropertyExpression p = svf.getProperty();
+//		
+////		labels.add(NODE_LABEL.OWLENTITY);
+//		
+//		String iri = p.getNamedProperty().toStringID();;
+//		if(p instanceof OWLObjectInverseOf) {
+//			neo4jName = NODE_TYPE.InverseOfPropertyRestrictionClass + "_" + iri.split("#")[1];
+//			
+//			info.put(NODE_KEY.NODE_IRI, NODE_TYPE.InverseOfPropertyRestrictionClass + "_" + iri);
+//			info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.InverseOfPropertyRestrictionClass);
+//		}
+//		else {
+//			neo4jName = NODE_TYPE.PropertyRestrictionClass + "_" + iri.split("#")[1];
+//			
+//			info.put(NODE_KEY.NODE_IRI,  NODE_TYPE.PropertyRestrictionClass + "_" + iri);
+//			info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.PropertyRestrictionClass);
+//		}
+//		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
+//		info.put(NODE_KEY.PROPERTY_IRI, iri);
+//	}
+	
+	private void toNegation() {
 		String iri = info.get(NODE_KEY.NODE_IRI);
 		String new_iri = NEG_PREFIX + iri;
 		
@@ -195,26 +247,4 @@ public class GraphNode {
 		info.put(NODE_KEY.POSITIVE_NODE_IRI, iri);
 		info.put(NODE_KEY.NODE_IRI, new_iri);
 	}	
-	
-	public GraphNode(OWLIndividual idv) {
-		String iri = idv.toStringID();
-		
-//		labels.add(NODE_LABEL.OWLENTITY);
-		
-		info.put(NODE_KEY.NODE_IRI, iri);
-		neo4jName = iri.split("#")[1];
-		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.NamedIndividual);
-		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
-	}
-	
-	public GraphNode(OWLIndividual a, OWLIndividual b) {
-		String a_iri = a.toStringID();
-		String b_iri = b.toStringID();
-		
-		neo4jName = a_iri.split("#")[1] + "_" + b_iri.split("#")[1];
-		info.put(NODE_KEY.SUBJECT_IRI, a_iri);
-		info.put(NODE_KEY.OBJECT_IRI, b_iri);
-		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.DualIndividual);
-		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
-	}
 }
