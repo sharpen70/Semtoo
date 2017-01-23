@@ -9,7 +9,12 @@ public class Variable implements Term {
 	
 	@Override
 	public String getName() {
-		return name;
+		return "v_" + name;
+	}
+	
+	@Override
+	public String getFullName() {
+		return "v_" + name;
 	}
 	
 	@Override

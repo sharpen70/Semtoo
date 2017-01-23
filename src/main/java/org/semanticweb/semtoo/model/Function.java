@@ -11,6 +11,12 @@ public class Function implements Term {
 		
 	}
 	
+	@Override
+	public String getFullName() {
+		// TODO Auto-generated method stub
+		return null;
+	}	
+	
 	public Function(String _name, List<Term> _terms) {
 		terms = _terms;
 		name = _name;

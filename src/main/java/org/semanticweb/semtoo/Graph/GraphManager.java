@@ -38,6 +38,7 @@ import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
 import org.semanticweb.semtoo.model.GraphNode;
 import org.semanticweb.semtoo.model.GraphNode.NODE_KEY;
+import org.semanticweb.semtoo.model.GraphNode.NODE_LABEL;
 import org.semanticweb.semtoo.model.GraphNode.NODE_TYPE;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 import org.semanticweb.semtoo.neo4j.Neo4jUpdate;
@@ -72,8 +73,20 @@ public class GraphManager {
 			
 			GraphNode node1 = new GraphNode(subject, object);
 			GraphNode node2 = new GraphNode(object, subject);
-			Neo4jUpdate.createNode(node1, tc);
-			Neo4jUpdate.createNode(node2, tc);
+			
+			String addDual = "CREATE (" + node1.neo4jName + ":DUAL {{node1_info}}), "
+							+ "(" + node2.neo4jName + ":DUAL {{node2_info}}) "
+							+ "MATCH (subject {{iri}:{s_iri}}), (object {{iri}:{o_iri}}) "
+							+ "CREATE (subject)-[:Subject]->(" + node1.neo4jName + "), "
+									+ "(subject)-[:Object]->(" + node2.neo4jName + "), "
+									+ "(object)-[:Subject]->(" + node2.neo4jName + "), "
+									+ "(object)-[:Object]->(" +node1.neo4jName + ")";
+			
+			tc.run(addDual, Values.parameters("iri", NODE_KEY.NODE_IRI, "node1_info", node1.info, 
+					"node2_info", node2.info, "s_iri", subject.toStringID(), "o_iri", object.toStringID()));
+			
+			Neo4jUpdate.createNode(node1, NODE_LABEL.INDIVIDUAL, tc);
+			Neo4jUpdate.createNode(node2, NODE_LABEL.INDIVIDUAL, tc);
 			
 			String so_iri = node1.info.get(NODE_KEY.NODE_IRI);
 			String os_iri = node2.info.get(NODE_KEY.NODE_IRI);
@@ -221,7 +234,7 @@ public class GraphManager {
 					Neo4jUpdate.createNode(rip, tc);
 				};
 				public void visit(OWLNamedIndividual idv) {
-					Neo4jUpdate.createNode(new GraphNode(idv), "Individual", tc);
+					Neo4jUpdate.createNode(new GraphNode(idv), NODE_LABEL.INDIVIDUAL, tc);
 				}
 			};
 			o.signature().filter(dl_lite_entityOnly).forEach(e -> e.accept(entityVisitor));			

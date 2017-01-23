@@ -7,7 +7,7 @@ import org.semanticweb.semtoo.tools.Helper;
 
 public class CQuery {
 	private List<Variable> queryVariable;
-	private List<UnaryAtom> body;
+	private List<NaryAtom> body;
 	
 	public CQuery(String q, String prefix) {
 		queryVariable = new ArrayList<>();
@@ -18,7 +18,7 @@ public class CQuery {
 		List<String> _body = Helper.getRegMatches(qs[1].trim(), "[A-Za-z][^\\(,]*\\([^()]*\\)");
 		List<String> variables = Helper.getRegMatches(qs[0].trim(), "\\?([^,\\s\\)]*)");
 		
-		for(String s : _body) body.add(new UnaryAtom(s, prefix));
+		for(String s : _body) body.add(new NaryAtom(s, prefix));
 		for(String s : variables) queryVariable.add(new Variable(s));
 	}
 	
@@ -26,7 +26,7 @@ public class CQuery {
 		return queryVariable;
 	}
 	
-	public List<UnaryAtom> getConjuncts() {
+	public List<NaryAtom> getConjuncts() {
 		return body;
 	}
 	

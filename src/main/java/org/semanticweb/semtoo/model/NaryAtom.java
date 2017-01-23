@@ -3,14 +3,15 @@ package org.semanticweb.semtoo.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NaryAtom implements Atom {
+public class NaryAtom {
 	private String predicate;
 	private List<Term> terms;
+	private String prefix;
 	
-	public NaryAtom(String atom, String prefix) {
+	public NaryAtom(String atom, String _prefix) {
 		terms = new ArrayList<>();
-		
-		predicate = prefix + atom.substring(0, atom.indexOf("(") - 1);
+		prefix = _prefix;
+		predicate = atom.substring(0, atom.indexOf("(") - 1);
 		String body = atom.substring(atom.indexOf("(") + 1, atom.length() - 1);
 		
 		String[] strs = body.split(",");
@@ -18,8 +19,12 @@ public class NaryAtom implements Atom {
 		for(String s : strs) {
 			s = s.trim();
 			if(s.startsWith("?")) terms.add(new Variable(s.substring(1)));
-			else terms.add(new Constant(s));
+			else terms.add(new Constant(s, _prefix));
 		}
+	}
+	
+	public String getFullName() {
+		return prefix + predicate;
 	}
 	
 	public String getPredicateName() {
