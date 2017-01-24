@@ -1,6 +1,7 @@
 package org.semanticweb.semtoo.examples;
 
 import org.semanticweb.semtoo.IAR;
+import org.semanticweb.semtoo.exception.QueryCreateException;
 import org.semanticweb.semtoo.model.CQuery;
 
 public class TestQueryAnswering {
@@ -26,14 +27,17 @@ public class TestQueryAnswering {
             
 		    "Q(?0) <- Publication(?0),publicationAuthor(?0,?1),Professor(?1),publicationAuthor(?0,?2),Student(?2)"};
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws QueryCreateException {
 			CQuery q = new CQuery(queries[2], prefixForA);
 			
+			CQuery q1 = new CQuery("Q(?0, ?1) <- R(?0, a), B(?0)", TestForgetting._prefix + "#"); 
+			System.out.println(q1);
 			IAR qa = new IAR();
 			
-			qa.answer(q);
+			//qa.detectConflicts();
+			qa.answer(q1);
 			
-			System.out.println(q);
+
 	}
 
 }

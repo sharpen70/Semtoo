@@ -27,14 +27,16 @@ public class IAR implements ICTolerant_QA {
 		m = Neo4jManager.getManager();
 	}
 	
-	public void detectConflicts(Session session) {
-		try(Transaction tc = session.beginTransaction()) {
-			String statement = "MATCH (a:Individual)-[:is]->(b)-[0*..]->(c:OWLEntity), "
-					+ "(a)-[:is]-(nb)-[0*..]->(n:" + GraphNode.NODE_LABEL.NEGATION +") "
-					+ "WHERE n.{key1} = c.{key2} "
-					+ "DELETE (a)-[:is]->(b), (a)-[:is]->(nb)";
-			tc.run(statement, Values.parameters("key1", GraphNode.NODE_KEY.POSITIVE_NODE_IRI, "key2", GraphNode.NODE_KEY.NODE_IRI));
-			tc.success();
+	public void detectConflicts() {
+		try(Session session = m.getSession()) {
+			try(Transaction tc = session.beginTransaction()) {
+				String statement = "MATCH (a)-[r1:is]->(b)-[*0..]->(c), "
+						+ "(a)-[r2:is]->(nb)-[*0..]->(n:" + NODE_LABEL.NEGATION +") "
+						+ "WHERE n." + NODE_KEY.POSITIVE_NODE_IRI + " = c." + NODE_KEY.NODE_IRI + " "
+						+ "DELETE r1, r2";
+				tc.run(statement);
+				tc.success();
+			}	
 		}
 	}
 	
@@ -63,7 +65,7 @@ public class IAR implements ICTolerant_QA {
 				boolean sC = second instanceof Constant;
 				String neo4jname = first.getName() + "_" + second.getName();
 				
-				node_pattern += "(" + neo4jname + ":DUAL {";
+				node_pattern += "(" + neo4jname + ":" + NODE_LABEL.DUALINDIVIDUAL + "{";
 				if(fC) node_pattern += NODE_KEY.SUBJECT_IRI + ":\"" + first.getFullName() + "\"";
 				if(fC && sC) node_pattern += ",";
 				if(sC) node_pattern += NODE_KEY.OBJECT_IRI + ":\"" + second.getFullName() + "\"";
@@ -79,26 +81,26 @@ public class IAR implements ICTolerant_QA {
 		statement += " RETURN ";
 		
 		for(int i = 0; i < vs.size(); i++) {
-			statement += vs.get(i).getName();
+			statement += vs.get(i).getName() + "." + NODE_KEY.NODE_IRI;
 			if(i != vs.size() - 1) statement += ", ";
 		}
 		
 		System.out.println(statement);
 		
-//		try(Session session = m.getSession()) {
-//			try(Transaction tc = session.beginTransaction()) {
-//				StatementResult re = tc.run(statement, Values.parameters("iri", NODE_KEY.NODE_IRI));
-//				
-//				while(re.hasNext()) {
-//					Record record = re.next();
-//					System.out.print("Answer: " );
-//					for(Pair<String, Value> p : record.fields()) {
-//						System.out.print(p.key() + ": " + p.value());
-//					}
-//					System.out.print("\n");
-//				}
-//			}
-//		}
+		try(Session session = m.getSession()) {
+			try(Transaction tc = session.beginTransaction()) {
+				StatementResult re = tc.run(statement);
+				
+				while(re.hasNext()) {
+					Record record = re.next();
+					System.out.println("Answer: " );
+					for(Pair<String, Value> p : record.fields()) {
+						System.out.println(p.key() + ":" + p.value());
+					}
+					System.out.print("\n");
+				}
+			}
+		}
 		
 		return null;
 	}

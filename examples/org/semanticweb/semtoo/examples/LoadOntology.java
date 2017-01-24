@@ -18,7 +18,7 @@ import org.semanticweb.owlapi.model.OWLException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.semtoo.Forgetting;
-import org.semanticweb.semtoo.Graph.GraphManager;
+import org.semanticweb.semtoo.graph.GraphManager;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 
 

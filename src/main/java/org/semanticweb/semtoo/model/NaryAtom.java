@@ -11,9 +11,9 @@ public class NaryAtom {
 	public NaryAtom(String atom, String _prefix) {
 		terms = new ArrayList<>();
 		prefix = _prefix;
-		predicate = atom.substring(0, atom.indexOf("(") - 1);
+		predicate = atom.substring(0, atom.indexOf("("));
 		String body = atom.substring(atom.indexOf("(") + 1, atom.length() - 1);
-		
+
 		String[] strs = body.split(",");
 		
 		for(String s : strs) {

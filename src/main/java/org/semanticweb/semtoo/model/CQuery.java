@@ -3,13 +3,14 @@ package org.semanticweb.semtoo.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.semanticweb.semtoo.exception.QueryCreateException;
 import org.semanticweb.semtoo.util.Helper;
 
 public class CQuery {
 	private List<Variable> queryVariable;
 	private List<NaryAtom> body;
 	
-	public CQuery(String q, String prefix) {
+	public CQuery(String q, String prefix) throws QueryCreateException {
 		queryVariable = new ArrayList<>();
 		body = new ArrayList<>();
 		
@@ -17,9 +18,14 @@ public class CQuery {
 		
 		List<String> _body = Helper.getRegMatches(qs[1].trim(), "[A-Za-z][^\\(,]*\\([^()]*\\)");
 		List<String> variables = Helper.getRegMatches(qs[0].trim(), "\\?([^,\\s\\)]*)");
+		List<String> bodyVariables = Helper.getRegMatches(qs[1].trim(), "\\?([^,\\s\\)]*)");
 		
 		for(String s : _body) body.add(new NaryAtom(s, prefix));
-		for(String s : variables) queryVariable.add(new Variable(s));
+		
+		for(String s : variables) {
+			if(!bodyVariables.contains(s)) throw new QueryCreateException();
+			queryVariable.add(new Variable(s));
+		}
 	}
 	
 	public List<Variable> getQueryVariable() {

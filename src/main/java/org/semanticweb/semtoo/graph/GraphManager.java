@@ -1,4 +1,4 @@
-package org.semanticweb.semtoo.Graph;
+package org.semanticweb.semtoo.graph;
 
 import java.util.Map;
 import java.util.function.Predicate;
@@ -75,8 +75,8 @@ public class GraphManager {
 			GraphNode node2 = new GraphNode(object, subject);
 			
 			String addDual = "MATCH (subject {" + NODE_KEY.NODE_IRI + ":{s_iri}}), (object {" + NODE_KEY.NODE_IRI + ":{o_iri}}) " 
-							+ "CREATE (" + node1.neo4jName + ":DUAL {node1_info}), "
-							+ "(" + node2.neo4jName + ":DUAL {node2_info}) "
+							+ "CREATE (" + node1.neo4jName + ":" + NODE_LABEL.DUALINDIVIDUAL + " {node1_info}), "
+							+ "(" + node2.neo4jName + ":" + NODE_LABEL.DUALINDIVIDUAL + " {node2_info}) "
 							+ "CREATE (subject)-[:Subject]->(" + node1.neo4jName + "), "
 									+ "(subject)-[:Object]->(" + node2.neo4jName + "), "
 									+ "(object)-[:Subject]->(" + node2.neo4jName + "), "

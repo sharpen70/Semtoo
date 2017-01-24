@@ -56,6 +56,7 @@ public class GraphNode {
 		public static final String OWLENTITY = "OWLEN";
 		public static final String NEGATION = "NEG";
 		public static final String INDIVIDUAL = "INDIVIDUAL";
+		public static final String DUALINDIVIDUAL = "DUAL";
 	}
 	
 	public static class NODE_KEY {

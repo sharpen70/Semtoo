@@ -60,17 +60,18 @@ public class Forgetting {
 				tc.success();
 			}
 			try(Transaction tc = session.beginTransaction()) {
-				String statement = "MATCH (a)-[*2..]->(b), " +
+				String statement = "MATCH " +
 								   "(a)-[r:SubOf|is]->(f1), " +
 								   "(f2)-[:SubOf]->(b) " +
 								   "WHERE NOT exists(a.forget) AND NOT exists(b.forget) " +
-								   "AND exists(f1.forget) AND exists(f2.forget) " +
+								   "AND exists(f1.forget) AND exists(f2.forget) AND " + 
+								   "(a)-[*2..]->(b) " +
 //								   "CREATE (a)-[r]->(b)";
-								   "FOREACH(ignore in CASE type(r) WHEN \"SubOf\" THEN [1] ELSE [] END | CREATE (a)-[:SubOf]->(b)) " +
-								   "FOREACH(ignore in CASE type(r) WHEN \"is\" THEN [1] ELSE [] END | CREATE (a)-[:is]->(b))";
+								   "FOREACH(ignore in CASE type(r) WHEN \"SubOf\" THEN [1] ELSE [] END | MERGE (a)-[:SubOf]->(b)) " +
+								   "FOREACH(ignore in CASE type(r) WHEN \"is\" THEN [1] ELSE [] END | MERGE (a)-[:is]->(b))";
 				
 				tc.run(statement);
-				//tc.run("MATCH (delete) WHERE exists(delete.forget) DETACH DELETE delete");
+				tc.run("MATCH (delete) WHERE exists(delete.forget) DETACH DELETE delete");
 				tc.success();
 			}
 		}
@@ -154,8 +155,8 @@ public class Forgetting {
 	//Build relations go through class A and remove class A
 	private void eliminateClass(String classIRI, Transaction tc) {
 		String exeString = "MATCH (a)-[r:SubOf|is]->(remove {" + NODE_KEY.NODE_IRI + ":{iri}})-[:SubOf]->(b) "
-				   		+ "FOREACH(ignore in CASE type(r) WHEN \"SubOf\" THEN [1] ELSE [] END | CREATE (a)-[:SubOf]->(b)) "
-				        + "FOREACH(ignore in CASE type(r) WHEN \"is\" THEN [1] ELSE [] END | CREATE (a)-[:is]->(b))"
+				   		+ "FOREACH(ignore in CASE type(r) WHEN \"SubOf\" THEN [1] ELSE [] END | MERGE (a)-[:SubOf]->(b)) "
+				        + "FOREACH(ignore in CASE type(r) WHEN \"is\" THEN [1] ELSE [] END | MERGE (a)-[:is]->(b))"
 						//+ "CREATE (a)-[r]->(b) "
 						+ "DETACH DELETE remove";
 		tc.run(exeString, Values.parameters("iri", classIRI));

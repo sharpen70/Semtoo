@@ -18,7 +18,7 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.PrefixManager;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.semtoo.Forgetting;
-import org.semanticweb.semtoo.Graph.GraphManager;
+import org.semanticweb.semtoo.graph.GraphManager;
 
 public class TestForgetting {
 	static final String _prefix = "http://org.semanticweb.semtoo/example";
@@ -48,23 +48,25 @@ public class TestForgetting {
 		
 		OWLObjectProperty R = df.getOWLObjectProperty("R", prefix);
 		OWLObjectProperty L = df.getOWLObjectProperty("L", prefix);
+		OWLObjectProperty N = df.getOWLObjectProperty("N", prefix);
 		
 		OWLIndividual a = df.getOWLNamedIndividual("a", prefix);
 		OWLIndividual b = df.getOWLNamedIndividual("b", prefix);
 		
 		axioms.add(df.getOWLSubClassOfAxiom(A, B));
-		axioms.add(df.getOWLSubClassOfAxiom(D, A));
+		axioms.add(df.getOWLSubClassOfAxiom(D, C));
 		
 		OWLClassExpression rR = df.getOWLObjectSomeValuesFrom(R, df.getOWLThing());
 		
 		axioms.add(df.getOWLSubObjectPropertyOfAxiom(R, L));
 		axioms.add(df.getOWLSubClassOfAxiom(B, rR));
-		axioms.add(df.getOWLDisjointClassesAxiom(B, C));
+	//	axioms.add(df.getOWLDisjointClassesAxiom(B, C));
+	//	axioms.add(df.getOWLDisjointObjectPropertiesAxiom(R, N));
 		
 		//axioms.add(df.getOWLDisjointClassesAxiom(B, B));
 		
 		axioms.add(df.getOWLClassAssertionAxiom(B, b));
-		axioms.add(df.getOWLClassAssertionAxiom(D, b));
+		axioms.add(df.getOWLClassAssertionAxiom(D, a));
 		axioms.add(df.getOWLClassAssertionAxiom(A, a));
 		axioms.add(df.getOWLObjectPropertyAssertionAxiom(R, a, b));
 		addAxiom(axioms, m, o);
@@ -76,13 +78,15 @@ public class TestForgetting {
 		GraphManager gm = new GraphManager();
 		gm.loadOntologyToGraph(createTestOntology());
 		
-		Forgetting f = new Forgetting();
 		
-		List<String> fs = new ArrayList<>();
-		fs.add(_prefix + "#B");
-		fs.add(_prefix + "#A");
+//		Forgetting f = new Forgetting();
+//		
+//		List<String> fs = new ArrayList<>();
+//		fs.add(_prefix + "#B");
+//		fs.add(_prefix + "#A");
 		
 		//f.forget(_prefix + "#B");
-		f.neighborRelatedForget(fs);
+		//f.neighborRelatedForget(fs);
+		
 	}
 }
