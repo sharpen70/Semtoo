@@ -42,13 +42,13 @@ import org.semanticweb.semtoo.model.GraphNode.NODE_LABEL;
 import org.semanticweb.semtoo.model.GraphNode.NODE_TYPE;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 import org.semanticweb.semtoo.neo4j.Neo4jUpdate;
-import org.semanticweb.semtoo.tools.DLliteFilter;
+import org.semanticweb.semtoo.util.DLliteFilter;
 
 public class GraphManager {
 	private Neo4jManager neo4jmanager = null;
 	
-	public GraphManager(Neo4jManager m) {
-		neo4jmanager = m;
+	public GraphManager() {
+		neo4jmanager = Neo4jManager.getManager();
 	}	
 	
 	private class loadAxiomVistor implements OWLAxiomVisitor {
@@ -74,30 +74,30 @@ public class GraphManager {
 			GraphNode node1 = new GraphNode(subject, object);
 			GraphNode node2 = new GraphNode(object, subject);
 			
-			String addDual = "CREATE (" + node1.neo4jName + ":DUAL {{node1_info}}), "
-							+ "(" + node2.neo4jName + ":DUAL {{node2_info}}) "
-							+ "MATCH (subject {{iri}:{s_iri}}), (object {{iri}:{o_iri}}) "
+			String addDual = "MATCH (subject {" + NODE_KEY.NODE_IRI + ":{s_iri}}), (object {" + NODE_KEY.NODE_IRI + ":{o_iri}}) " 
+							+ "CREATE (" + node1.neo4jName + ":DUAL {node1_info}), "
+							+ "(" + node2.neo4jName + ":DUAL {node2_info}) "
 							+ "CREATE (subject)-[:Subject]->(" + node1.neo4jName + "), "
 									+ "(subject)-[:Object]->(" + node2.neo4jName + "), "
 									+ "(object)-[:Subject]->(" + node2.neo4jName + "), "
 									+ "(object)-[:Object]->(" +node1.neo4jName + ")";
 			
-			tc.run(addDual, Values.parameters("iri", NODE_KEY.NODE_IRI, "node1_info", node1.info, 
+			tc.run(addDual, Values.parameters("node1_info", node1.info, 
 					"node2_info", node2.info, "s_iri", subject.toStringID(), "o_iri", object.toStringID()));
 			
-			Neo4jUpdate.createNode(node1, NODE_LABEL.INDIVIDUAL, tc);
-			Neo4jUpdate.createNode(node2, NODE_LABEL.INDIVIDUAL, tc);
+			//Neo4jUpdate.createNode(node1, NODE_LABEL.INDIVIDUAL, tc);
+			//Neo4jUpdate.createNode(node2, NODE_LABEL.INDIVIDUAL, tc);
 			
 			String so_iri = node1.info.get(NODE_KEY.NODE_IRI);
 			String os_iri = node2.info.get(NODE_KEY.NODE_IRI);
 			String p_iri = GraphNode.getPropertyIRI(property);
 			String ip_iri = GraphNode.getPropertyIRI(property.getInverseProperty());
 			
-			String statement1 = "MATCH (subject_object {{iri}:{so_iri}}), (p {{iri}:{p_iri}}), "
-					+ "(object_subject {{iri}:{os_iri}}), (ip {{iri}:{ip_iri}}) "
+			String statement1 = "MATCH (subject_object {" + NODE_KEY.NODE_IRI + ":{so_iri}}), (p {" + NODE_KEY.NODE_IRI + ":{p_iri}}), "
+					+ "(object_subject {" + NODE_KEY.NODE_IRI + ":{os_iri}}), (ip {" + NODE_KEY.NODE_IRI + ":{ip_iri}}) "
 					+ "CREATE (subject_object)-[:is]->(p), (object_subject)-[:is]->(ip)";
 			
-			tc.run(statement1, Values.parameters("iri", NODE_KEY.NODE_IRI, "so_iri", so_iri, 
+			tc.run(statement1, Values.parameters("so_iri", so_iri, 
 					"p_iri", p_iri, "os_iri", os_iri, "ip_iri", ip_iri));
 			
 			String subject_iri = subject.toStringID();
@@ -105,11 +105,11 @@ public class GraphManager {
 			String rp_iri = GraphNode.getPRctClassIRI(property);
 			String rip_iri = GraphNode.getPRctClassIRI(property.getInverseProperty());
 			
-			String statement2 = "MATCH (subject {{iri}:{siri}}), (p {{iri}:{piri}}), "
-					+ "(object {{iri}:{oiri}}) (ip {{iri}:{ipiri}}) "
+			String statement2 = "MATCH (subject {" + NODE_KEY.NODE_IRI + ":{siri}}), (p {" + NODE_KEY.NODE_IRI + ":{piri}}), "
+					+ "(object {" + NODE_KEY.NODE_IRI + ":{oiri}}), (ip {" + NODE_KEY.NODE_IRI + ":{ipiri}}) "
 					+ "CREATE (subject)-[:is]->(p), (object)-[:is]->(ip)";
 			
-			tc.run(statement2, Values.parameters("iri", NODE_KEY.NODE_IRI, "siri", subject_iri,
+			tc.run(statement2, Values.parameters("siri", subject_iri,
 					"piri", rp_iri, "oiri", object_iri, "ipiri", rip_iri));
 			tc.success();
 		}
@@ -120,7 +120,7 @@ public class GraphManager {
 					String a_iri = a.accept(getExpIRI);
 					GraphNode negationNode = GraphNode.getClassNodeByClassExpression(b, true);
 					
-					tc.run("MATCH (a {iri:{a_iri}}) MERGE (b {iri:{b_info}.iri}) "
+					tc.run("MATCH (a {" + NODE_KEY.NODE_IRI + ":{a_iri}}) MERGE (b {" + NODE_KEY.NODE_IRI + ":{b_info}.iri}) "
 							+ "ON CREATE SET b:" + GraphNode.NODE_LABEL.NEGATION + ", b = {b_info} CREATE (a)-[:SubOf]->(b)", 
 							Values.parameters("a_iri", a_iri, "b_info", negationNode.info));
 					tc.success();
@@ -129,6 +129,7 @@ public class GraphManager {
 			axiom.forEach(_visitor);
 		};
 		public void visit(OWLSubClassOfAxiom axiom) {
+//			System.out.println(axiom);
 			String sub_iri = axiom.getSubClass().accept(getExpIRI);
 			String super_iri = axiom.getSuperClass().accept(getExpIRI);
 			Neo4jUpdate.matchAndcreateRelation(sub_iri, super_iri, "SubOf", tc);
@@ -140,7 +141,7 @@ public class GraphManager {
 					String a_iri = a.accept(getExpIRI);
 					String b_iri = b.accept(getExpIRI);
 					
-					tc.run("MATCH (a {iri:{a_iri}}), (b {iri:{b_iri}}) CREATE (a)-[:SubOf]->(b) CREATE (b)-[:SubOf]->(a)",
+					tc.run("MATCH (a {" + NODE_KEY.NODE_IRI + ":{a_iri}}), (b {" + NODE_KEY.NODE_IRI + ":{b_iri}}) CREATE (a)-[:SubOf]->(b) CREATE (b)-[:SubOf]->(a)",
 							Values.parameters("a_iri", a_iri, "b_iri", b_iri));
 					tc.success();
 				}
@@ -176,12 +177,12 @@ public class GraphManager {
 					String a_iri = GraphNode.getPropertyIRI(a);
 					String ia_iri = GraphNode.getPropertyIRI(a.getInverseProperty());
 					
-					String statement1 = "MATCH (a {{iri}:{a_iri}}) MATCH (ia {{iri}:{ia_iri}}) "
-									+ "MERGE (nb {{iri}:{nb_info}.{iri}}) ON CREATE SET nb:" + GraphNode.NODE_LABEL.NEGATION + ", nb = {nb_info} "
-									+ "MERGE (nib {{iri}:{nib_info}.{iri}}) ON CREATE SET nib:" + GraphNode.NODE_LABEL.NEGATION + ", nib = {nib_info} "
+					String statement1 = "MATCH (a {" + NODE_KEY.NODE_IRI + ":{a_iri}}) MATCH (ia {" + NODE_KEY.NODE_IRI + ":{ia_iri}}) "
+									+ "MERGE (nb {" + NODE_KEY.NODE_IRI + ":{nb_info}." + NODE_KEY.NODE_IRI + "}) ON CREATE SET nb:" + GraphNode.NODE_LABEL.NEGATION + ", nb = {nb_info} "
+									+ "MERGE (nib {" + NODE_KEY.NODE_IRI + ":{nib_info}." + NODE_KEY.NODE_IRI + "}) ON CREATE SET nib:" + GraphNode.NODE_LABEL.NEGATION + ", nib = {nib_info} "
 									+ "CREATE (a)-[:SubOf]->(nb), (ia)-[:SubOf]->(nib)";
 					
-					tc.run(statement1, Values.parameters("iri", NODE_KEY.NODE_IRI, "a_iri", a_iri, 
+					tc.run(statement1, Values.parameters("a_iri", a_iri, 
 							"ia_iri", ia_iri, "nb_info", nb_node.info, "nib_info", nib_node.info));
 					tc.success();
 					
@@ -190,12 +191,12 @@ public class GraphManager {
 					String ra_iri = GraphNode.getPRctClassIRI(a);
 					String ria_iri = GraphNode.getPRctClassIRI(a.getInverseProperty());
 					
-					String statement2 = "MATCH (ra {{iri}:{ra_iri}}) MATCH (ria {{iri}:{ria_iri}}) "
-							+ "MERGE (nrb {{iri}:{nrb_info}.{iri}}) ON CREATE SET nrb:" + GraphNode.NODE_LABEL.NEGATION + ", nrb = {nrb_info} "
-							+ "MERGE (nrib {{iri}:{nrib_info}.{iri}}) ON CREATE SET nrib:" + GraphNode.NODE_LABEL.NEGATION + ", nrib = {nrib_info} "
+					String statement2 = "MATCH (ra {" + NODE_KEY.NODE_IRI + ":{ra_iri}}) MATCH (ria {" + NODE_KEY.NODE_IRI + ":{ria_iri}}) "
+							+ "MERGE (nrb {" + NODE_KEY.NODE_IRI + ":{nrb_info}." + NODE_KEY.NODE_IRI + "}) ON CREATE SET nrb:" + GraphNode.NODE_LABEL.NEGATION + ", nrb = {nrb_info} "
+							+ "MERGE (nrib {" + NODE_KEY.NODE_IRI + ":{nrib_info}." + NODE_KEY.NODE_IRI + "}) ON CREATE SET nrib:" + GraphNode.NODE_LABEL.NEGATION + ", nrib = {nrib_info} "
 							+ "CREATE (ra)-[:SubOf]->(nrb), (ria)-[:SubOf]->(nrib)";
 			
-					tc.run(statement2, Values.parameters("iri", NODE_KEY.NODE_IRI, "ra_iri", ra_iri,
+					tc.run(statement2, Values.parameters("ra_iri", ra_iri,
 					"ria_iri", ria_iri, "nrb_info", nrb_node.info, "nrib_info", nrib_node.info));
 					tc.success();
 				}

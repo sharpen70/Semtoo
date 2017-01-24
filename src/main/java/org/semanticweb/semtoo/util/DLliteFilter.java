@@ -1,4 +1,4 @@
-package org.semanticweb.semtoo.tools;
+package org.semanticweb.semtoo.util;
 
 import java.util.HashSet;
 import java.util.List;

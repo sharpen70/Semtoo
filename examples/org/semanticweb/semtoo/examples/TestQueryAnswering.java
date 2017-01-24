@@ -1,5 +1,6 @@
 package org.semanticweb.semtoo.examples;
 
+import org.semanticweb.semtoo.IAR;
 import org.semanticweb.semtoo.model.CQuery;
 
 public class TestQueryAnswering {
@@ -27,6 +28,10 @@ public class TestQueryAnswering {
 	
 	public static void main(String[] args) {
 			CQuery q = new CQuery(queries[2], prefixForA);
+			
+			IAR qa = new IAR();
+			
+			qa.answer(q);
 			
 			System.out.println(q);
 	}

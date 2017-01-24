@@ -58,7 +58,7 @@ public class LoadOntology {
 //			e.printStackTrace();
 //		}
 		
-		GraphManager gm = new GraphManager(new Neo4jManager());
+		GraphManager gm = new GraphManager();
 		gm.loadOntologyToGraph(ontology);
 		
 

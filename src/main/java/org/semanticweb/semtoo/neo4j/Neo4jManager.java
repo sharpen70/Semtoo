@@ -10,16 +10,22 @@ public class Neo4jManager {
 	private Driver driver;
 	private static final AuthToken token = AuthTokens.basic("neo4j", "123");
 	private static final String url = "bolt://localhost:7687";
-
 	
-	public Neo4jManager() {
+	private Neo4jManager() {
 		driver = GraphDatabase.driver(url, token);		
 	}		
+	
+	static class SingletonHolder {
+		static Neo4jManager m = new Neo4jManager();
+	}
+	
+	public static Neo4jManager getManager() {
+		return SingletonHolder.m;
+	}
 	
 	public Session getSession() {
 		return driver.session();
 	}	
-	
 	
 	public void close() {
 		driver.close();

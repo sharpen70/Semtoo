@@ -6,6 +6,7 @@ import java.util.Map;
 import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.Values;
 import org.semanticweb.semtoo.model.GraphNode;
+import org.semanticweb.semtoo.model.GraphNode.NODE_KEY;
 
 public class Neo4jUpdate {
 
@@ -26,7 +27,7 @@ public class Neo4jUpdate {
 	}
 	
 	public static void matchAndcreateRelation(String from, String to, String relationLabel, Transaction tc) {
-		tc.run("MATCH (a {iri:{a_iri}}), (b {iri:{b_iri}}) CREATE (a)-[:" + relationLabel + "]->(b)", 
+		tc.run("MATCH (a {" + NODE_KEY.NODE_IRI + ":{a_iri}}), (b {" + NODE_KEY.NODE_IRI + ":{b_iri}}) CREATE (a)-[:" + relationLabel + "]->(b)", 
 				Values.parameters("a_iri", from, "b_iri", to));
 		tc.success();
 	}
@@ -47,7 +48,7 @@ public class Neo4jUpdate {
 	}
 	
 	public static void deleteRelation(String a_iri, String b_iri, String relationLabel, Transaction tc) {
-		tc.run("MATCH (a {iri:{a_iri}})-[r:" + relationLabel + "]->(b {iri:{b_iri}}) DELETE r", 
+		tc.run("MATCH (a {" + NODE_KEY.NODE_IRI + ":{a_iri}})-[r:" + relationLabel + "]->(b {" + NODE_KEY.NODE_IRI + ":{b_iri}}) DELETE r", 
 				Values.parameters("a_iri", a_iri, "b_iri", b_iri));
 		tc.success();
 	}	

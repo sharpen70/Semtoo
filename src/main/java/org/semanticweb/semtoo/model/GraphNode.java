@@ -101,8 +101,10 @@ public class GraphNode {
 	public GraphNode(OWLIndividual a, OWLIndividual b) {
 		String a_iri = a.toStringID();
 		String b_iri = b.toStringID();
-		
+
 		neo4jName = a_iri.split("#")[1] + "_" + b_iri.split("#")[1];
+		
+		info.put(NODE_KEY.NODE_IRI, a_iri + "_" + b_iri);
 		info.put(NODE_KEY.SUBJECT_IRI, a_iri);
 		info.put(NODE_KEY.OBJECT_IRI, b_iri);
 		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.DualIndividual);
@@ -129,7 +131,7 @@ public class GraphNode {
 		else {
 			if(restriction) {
 				neo4jName = PRT_PREFIX + iri.split("#")[1];
-				info.put(NODE_KEY.NODE_IRI, PRT_PREFIX + INV_PREFIX + iri);
+				info.put(NODE_KEY.NODE_IRI, PRT_PREFIX + iri);
 				info.put(NODE_KEY.PROPERTY_IRI, iri);
 				info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.PropertyRestrictionClass);
 			}

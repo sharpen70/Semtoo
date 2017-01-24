@@ -3,7 +3,7 @@ package org.semanticweb.semtoo.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.semanticweb.semtoo.tools.Helper;
+import org.semanticweb.semtoo.util.Helper;
 
 public class CQuery {
 	private List<Variable> queryVariable;
