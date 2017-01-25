@@ -18,4 +18,17 @@ public class Helper {
 		
 		return matches;
 	}
+	
+	//Return the first group of the first match, if exists
+	public static String singleMatch(String str, String regex) {
+		Pattern pattern = Pattern.compile(regex);
+		Matcher matcher = pattern.matcher(str);
+		
+		if(matcher.find()) {
+			if(matcher.groupCount() == 0) return matcher.group();
+			else return matcher.group(1);
+		}		
+		
+		return null;
+	}
 }

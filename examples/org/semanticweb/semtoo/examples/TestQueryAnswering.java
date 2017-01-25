@@ -30,7 +30,7 @@ public class TestQueryAnswering {
 	public static void main(String[] args) throws QueryCreateException {
 			CQuery q = new CQuery(queries[2], prefixForA);
 			
-			CQuery q1 = new CQuery("Q(?0, ?1) <- R(?0, a), B(?0)", TestForgetting._prefix + "#"); 
+			CQuery q1 = new CQuery("Q(?0, ?1) <- R(?0, ?1), B(?0)", TestForgetting._prefix + "#"); 
 			System.out.println(q1);
 			IAR qa = new IAR();
 			

@@ -18,50 +18,29 @@ import org.semanticweb.owlapi.model.OWLException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.semtoo.Forgetting;
+import org.semanticweb.semtoo.graph.DBFileReader;
 import org.semanticweb.semtoo.graph.GraphManager;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 
 
 public class LoadOntology {
-	public static final IRI EXAMPLE_IRI = IRI.create("http://protege.stanford.edu/ontologies/pizza/pizza.owl");
-
+	public static final String prefix = "http://swat.cse.lehigh.edu/onto/univ-bench.owl#";
 	
-	public static void main(String[] args) throws OWLException {
-		// TODO Auto-generated method stub
+	public static void main(String[] args) throws Exception {
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		
-		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File("./resources/pizza.owl"));			
+		File lubm = new File("./resources/LUBM_DLlite.owl");
+		File lubm_data = new File("./resources/u1p0.sql");
+		//	OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File("./resources/pizza.owl"));			
 		
-//		try {
-//			PrintWriter writer = new PrintWriter("test/pizzaowl", "UTF-8");
-//			Consumer<OWLAxiom> print = (p) -> writer.println(p);						
-//			ontology.axioms().forEach(print);
-//			writer.close();
-//			
-//			PrintWriter writer2 = new PrintWriter("test/sigOfpizzaowl", "UTF-8");
-//			ontology.signature().forEach(p -> writer2.println(p));
-//
-//			writer2.close();
-//			
-//			PrintWriter writer3 = new PrintWriter("test/classofpizzaowl", "UTF-8");
-//			ontology.classesInSignature().forEach(p -> writer3.println(p));
-//			writer3.close();
-//			
-//			PrintWriter writer4 = new PrintWriter("test/individualofpizzaowl", "UTF-8");
-//			ontology.individualsInSignature().forEach(p -> writer4.println(p));
-//			writer4.close();
-//		} catch (FileNotFoundException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (UnsupportedEncodingException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(lubm);	
 		
 		GraphManager gm = new GraphManager();
 		gm.loadOntologyToGraph(ontology);
+		DBFileReader reader = new DBFileReader();
+		reader.addPrefix(prefix);
+		reader.readDBFileToGraph(lubm_data);
 		
-
 //		String conceptIRI = "http://www.co-ode.org/ontologies/pizza/pizza.owl#FourSeasons";
 //		Forgetting f = new Forgetting(m);
 //		f.forget(conceptIRI);

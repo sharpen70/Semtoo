@@ -88,6 +88,25 @@ public class GraphNode {
 		else return GraphNode.PRT_PREFIX + piri;	
 	}
 	
+//	public GraphNode(String iri) {
+////		labels.add(NODE_LABEL.OWLENTITY);
+//		
+//		info.put(NODE_KEY.NODE_IRI, iri);
+//		neo4jName = iri.split("#")[1];
+//		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.NamedIndividual);
+//		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
+//	}
+//	
+//	public GraphNode(String a_iri, String b_iri) {
+//		neo4jName = a_iri.split("#")[1] + "_" + b_iri.split("#")[1];
+//		
+//		info.put(NODE_KEY.NODE_IRI, a_iri + "_" + b_iri);
+//		info.put(NODE_KEY.SUBJECT_IRI, a_iri);
+//		info.put(NODE_KEY.OBJECT_IRI, b_iri);
+//		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.DualIndividual);
+//		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
+//	}
+	
 	public GraphNode(OWLIndividual idv) {
 		String iri = idv.toStringID();
 		

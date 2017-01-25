@@ -10,7 +10,7 @@ public class CQuery {
 	private List<Variable> queryVariable;
 	private List<NaryAtom> body;
 	
-	public CQuery(String q, String prefix) throws QueryCreateException {
+	public CQuery(String q, String prefix) {
 		queryVariable = new ArrayList<>();
 		body = new ArrayList<>();
 		

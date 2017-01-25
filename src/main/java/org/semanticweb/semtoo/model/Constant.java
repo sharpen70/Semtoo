@@ -16,7 +16,7 @@ public class Constant implements Term {
 	
 	@Override
 	public String getFullName() {
-		return prefix + name;
+		return name;
 	}
 	
 	@Override
