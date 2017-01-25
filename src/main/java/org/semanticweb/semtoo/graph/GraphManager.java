@@ -205,23 +205,34 @@ public class GraphManager {
 		};
 	}
 	
+	public void loadTboxToGraph(OWLOntology o) {
+		try(Session session = neo4jmanager.getSession()) {
+			try(Transaction tc = session.beginTransaction()) {
+				
+			}
+		}
+	}
+	
 	public void loadOntologyToGraph(OWLOntology o) {
 		Session session = neo4jmanager.getSession();
 		
 		long start = System.currentTimeMillis();
 		
-		//Set the Graph to empty Graph 
+		//Transfer entities of Individual, Class and Property to nodes in the graph 
+		
+		//Build Index on for Nodes on IRI property
+		System.out.println("Build index for TBox Entities on IRI ...");
+		
 		try(Transaction tc = session.beginTransaction()) {
-			Neo4jUpdate.clearGraph(tc);
+			Neo4jUpdate.buildIndex(NODE_LABEL.TBOXENTITY, NODE_KEY.NODE_IRI, tc); 
 		}
 		
-		//Transfer entities of Individual, Class and Property to nodes in the graph 
-		System.out.println("Turning ontology class into nodes ...");
+		System.out.println("Inserting nodes for Ontology Entities ...");
 		
 		try(Transaction tc = session.beginTransaction()) {
 			OWLEntityVisitor entityVisitor = new OWLEntityVisitor() {
 				public void visit(OWLClass ce) {
-					Neo4jUpdate.createNode(new GraphNode(ce), tc);
+					Neo4jUpdate.createNode(new GraphNode(ce), NODE_LABEL.TBOXENTITY, tc);
 				};
 				public void visit(OWLObjectProperty property) {
 					GraphNode p = new GraphNode(property, false, false);
@@ -229,10 +240,10 @@ public class GraphManager {
 					GraphNode rp = new GraphNode(property, true, false);
 					GraphNode rip = new GraphNode(property, true, true);
 					
-					Neo4jUpdate.createNode(p, tc);
-					Neo4jUpdate.createNode(ip, tc);
-					Neo4jUpdate.createNode(rp, tc);
-					Neo4jUpdate.createNode(rip, tc);
+					Neo4jUpdate.createNode(p, NODE_LABEL.TBOXENTITY, tc);
+					Neo4jUpdate.createNode(ip, NODE_LABEL.TBOXENTITY, tc);
+					Neo4jUpdate.createNode(rp, NODE_LABEL.TBOXENTITY, tc);
+					Neo4jUpdate.createNode(rip, NODE_LABEL.TBOXENTITY, tc);
 				};
 				public void visit(OWLNamedIndividual idv) {
 					Neo4jUpdate.createNode(new GraphNode(idv), NODE_LABEL.INDIVIDUAL, tc);
@@ -240,18 +251,19 @@ public class GraphManager {
 			};
 			o.signature().filter(dl_lite_entityOnly).forEach(e -> e.accept(entityVisitor));			
 		}
-		long end = System.currentTimeMillis();
-		System.out.println("Create nodes Transaction closed in " + (end - start) + " ms");
 		
 		try(Transaction tc = session.beginTransaction()) {
-			Neo4jUpdate.addLabelToAll("OWLEntity", tc);
+			tc.run("MATCH (n:" + NODE_LABEL.TBOXENTITY + ") SET n." + NODE_KEY.IRI_LOWER + " = LOWER(n." + NODE_KEY.NODE_IRI + ")");
+			tc.success();
 		}
 		
-		//Build Index on for Nodes on IRI property
-		System.out.println("Build Index for class iri ...");
 		try(Transaction tc = session.beginTransaction()) {
-			Neo4jUpdate.buildIndex("OWLEntity", "iri", tc); 
-		}		
+			tc.run("CREATE INDEX ON :" + NODE_LABEL.TBOXENTITY + "(" + NODE_KEY.IRI_LOWER + ")");
+			tc.success();
+		}
+		
+		long end = System.currentTimeMillis();
+		System.out.println("Done with " + (end - start) + " ms");
 		
 		//Build relations between Nodes according Tbox Axioms
 		System.out.println("Creating relations between nodes according to axioms ...");

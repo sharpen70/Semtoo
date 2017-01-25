@@ -9,6 +9,8 @@ import java.util.function.Consumer;
 
 import java.util.stream.Stream;
 
+import org.neo4j.driver.v1.Session;
+import org.neo4j.driver.v1.Transaction;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
@@ -21,6 +23,7 @@ import org.semanticweb.semtoo.Forgetting;
 import org.semanticweb.semtoo.graph.DBFileReader;
 import org.semanticweb.semtoo.graph.GraphManager;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
+import org.semanticweb.semtoo.neo4j.Neo4jUpdate;
 
 
 public class LoadOntology {
@@ -35,6 +38,14 @@ public class LoadOntology {
 		
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(lubm);	
 		
+		Neo4jManager m = Neo4jManager.getManager();
+	
+		try(Session session = m.getSession()) {
+			try(Transaction tc = session.beginTransaction()) {
+					Neo4jUpdate.clearGraph(tc);
+			}
+		}
+	
 		GraphManager gm = new GraphManager();
 		gm.loadOntologyToGraph(ontology);
 		DBFileReader reader = new DBFileReader();

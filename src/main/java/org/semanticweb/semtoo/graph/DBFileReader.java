@@ -87,10 +87,10 @@ public class DBFileReader {
 										+ " MERGE (a)-[:Subject]->(ab) MERGE (a)-[:Object]->(ba)"
 										+ " MERGE (b)-[:Subject]->(ba) MERGE (b)-[:Object]->(ab)"
 										+ " WITH a, b, ab, ba"
-										+ " MATCH (p {" + NODE_KEY.NODE_IRI + ":\"" + predicate_iri + "\"}),"
-										+ " (ip {" + NODE_KEY.NODE_IRI + ":\"" + inv_predicate_iri + "\"}),"
-										+ " (rp {" + NODE_KEY.NODE_IRI + ":\"" + prt_iri + "\"}),"
-										+ " (rip {" + NODE_KEY.NODE_IRI + ":\"" + inv_prt_iri + "\"})"
+										+ " MATCH (p:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":\"" + predicate_iri + "\"}),"
+										+ " (ip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":\"" + inv_predicate_iri + "\"}),"
+										+ " (rp:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":\"" + prt_iri + "\"}),"
+										+ " (rip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":\"" + inv_prt_iri + "\"})"
 										+ " CREATE (ab)-[:is]->(p), (ba)-[:is]->(ip)"
 										+ " MERGE (a)-[:is]->(rp) MERGE (b)-[:is]->(rip)";
 								tc.run(statement);
@@ -98,7 +98,7 @@ public class DBFileReader {
 							}
 							else {
 								String statement = "MERGE (a:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":\"" + term1 + "\"}) "
-										+ "WITH a MATCH (p {" + NODE_KEY.NODE_IRI + ":\"" + predicate_iri + "\"}) "
+										+ "WITH a MATCH (p:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":\"" + predicate_iri + "\"}) "
 												+ "CREATE (a)-[:is]->(p)";
 								tc.run(statement);
 								tc.success();
@@ -113,7 +113,7 @@ public class DBFileReader {
 							long end = System.currentTimeMillis();
 							System.out.println("Done reading of " + read_count + " assertion records with " + (end - start) + " ms");
 						}
-						
+					//	if(read_count >= 2000) break;
 //						if(ic >= 10000) {
 //							tc.close();
 //							tc = session.beginTransaction();
@@ -123,7 +123,8 @@ public class DBFileReader {
 //							System.out.println("Done inserting of " + insert_count + " assertion records with " + (end - start) / 1000 + " ms");
 //						}
 						data = scanner.nextLine();
-					};
+					}
+					//if(read_count >= 2000) break;
 				}
 			}
 			}//tc.close();

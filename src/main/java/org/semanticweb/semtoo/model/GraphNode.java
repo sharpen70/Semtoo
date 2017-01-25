@@ -55,6 +55,7 @@ public class GraphNode {
 	public static class NODE_LABEL {
 		public static final String OWLENTITY = "OWLEN";
 		public static final String NEGATION = "NEG";
+		public static final String TBOXENTITY = "TBEN";
 		public static final String INDIVIDUAL = "INDIVIDUAL";
 		public static final String DUALINDIVIDUAL = "DUAL";
 	}
@@ -67,6 +68,7 @@ public class GraphNode {
 		public static final String PROPERTY_IRI = "ppiri";		
 		public static final String SUBJECT_IRI = "subiri";
 		public static final String OBJECT_IRI = "objiri";
+		public static final String IRI_LOWER = "iri_lower";
 	}
 	
 	public static final String NEG_PREFIX = "neg_";

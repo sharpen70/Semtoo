@@ -28,16 +28,17 @@ public class TestQueryAnswering {
 		    "Q(?0) <- Publication(?0),publicationAuthor(?0,?1),Professor(?1),publicationAuthor(?0,?2),Student(?2)"};
 	
 	public static void main(String[] args) throws QueryCreateException {
-			CQuery q = new CQuery(queries[2], prefixForA);
+			CQuery q = new CQuery(queries[1], prefixForA);
 			
-			CQuery q1 = new CQuery("Q(?0, ?1) <- R(?0, ?1), B(?0)", TestForgetting._prefix + "#"); 
-			System.out.println(q1);
+//			CQuery q1 = new CQuery("Q(?0, ?1) <- R(?0, ?1), B(?0)", TestForgetting._prefix + "#"); 
+//			System.out.println(q1);
 			IAR qa = new IAR();
 			
 			//qa.detectConflicts();
-			qa.answer(q1);
-			
-
+			long start = System.currentTimeMillis();
+			qa.answer(q);
+			long end = System.currentTimeMillis();
+			System.out.println("USING " + (end - start) + " ms ...");
 	}
 
 }

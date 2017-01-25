@@ -56,7 +56,7 @@ public class IAR implements ICTolerant_QA {
 				Term t = terms.get(0);
 				node_pattern += "(" + t.getName() + ":" + NODE_LABEL.INDIVIDUAL;
 				if(t instanceof Constant) node_pattern += " {" + NODE_KEY.NODE_IRI + ":\"" + t.getName() + "\"}" ;
-				node_pattern += ")-[*]->(" + a.getPredicateName() + " {" + NODE_KEY.NODE_IRI + ":\"" + a.getFullName() + "\"})";
+				node_pattern += ")-[*]->(" + a.getPredicateName() + ":" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI + ":\"" + a.getFullName() + "\"})";
 			}
 			if(terms.size() == 2) {
 				Term first = terms.get(0);
@@ -69,7 +69,7 @@ public class IAR implements ICTolerant_QA {
 				if(fC) node_pattern += NODE_KEY.SUBJECT_IRI + ":\"" + first.getFullName() + "\"";
 				if(fC && sC) node_pattern += ",";
 				if(sC) node_pattern += NODE_KEY.OBJECT_IRI + ":\"" + second.getFullName() + "\"";
-				node_pattern += "})-[*]->(" + a.getPredicateName() + " {" + NODE_KEY.NODE_IRI + ":\"" + a.getFullName() + "\"})";
+				node_pattern += "})-[*]->(" + a.getPredicateName() + ":" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI + ":\"" + a.getFullName() + "\"})";
 				
 				if(!fC) node_pattern += ", (" + first.getName() + ")-[:Subject]->(" + neo4jname + ")";
 				if(!sC) node_pattern += ", (" + second.getName() + ")-[:Object]->(" + neo4jname + ")";
@@ -78,7 +78,7 @@ public class IAR implements ICTolerant_QA {
 			if(i != conjuncts.size() - 1) statement += ", ";
 		}
 		
-		statement += " RETURN ";
+		statement += " RETURN DISTINCT ";
 		
 		for(int i = 0; i < vs.size(); i++) {
 			statement += vs.get(i).getName() + "." + NODE_KEY.NODE_IRI;
@@ -93,11 +93,11 @@ public class IAR implements ICTolerant_QA {
 				
 				while(re.hasNext()) {
 					Record record = re.next();
-					System.out.println("Answer: " );
+					//System.out.println("Answer: " );
 					for(Pair<String, Value> p : record.fields()) {
-						System.out.println(p.key() + ":" + p.value());
+					//	System.out.println(p.key() + ":" + p.value());
 					}
-					System.out.print("\n");
+					//System.out.print("\n");
 				}
 			}
 		}
