@@ -93,11 +93,11 @@ public class IAR implements ICTolerant_QA {
 				
 				while(re.hasNext()) {
 					Record record = re.next();
-					//System.out.println("Answer: " );
+				//	System.out.println("Answer: " );
 					for(Pair<String, Value> p : record.fields()) {
-					//	System.out.println(p.key() + ":" + p.value());
+				//		System.out.println(p.key() + ":" + p.value());
 					}
-					//System.out.print("\n");
+				//	System.out.print("\n");
 				}
 			}
 		}

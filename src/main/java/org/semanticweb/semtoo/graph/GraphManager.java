@@ -58,61 +58,62 @@ public class GraphManager {
 			tc = transaction;
 		}
 		
-		public void visit(OWLClassAssertionAxiom axiom) {
-			OWLClassExpression exp = axiom.getClassExpression();
-			OWLIndividual idv = axiom.getIndividual();
-			
-			String iri = exp.accept(getExpIRI);
-			
-			Neo4jUpdate.matchAndcreateRelation(idv.toStringID(), iri, "is", tc);;
-		};
-		public void visit(OWLObjectPropertyAssertionAxiom axiom) {
-			OWLIndividual subject = axiom.getSubject();
-			OWLIndividual object = axiom.getObject();
-			OWLObjectPropertyExpression property = axiom.getProperty();
-			
-			GraphNode node1 = new GraphNode(subject, object);
-			GraphNode node2 = new GraphNode(object, subject);
-			
-			String addDual = "MATCH (subject {" + NODE_KEY.NODE_IRI + ":{s_iri}}), (object {" + NODE_KEY.NODE_IRI + ":{o_iri}}) " 
-							+ "CREATE (" + node1.neo4jName + ":" + NODE_LABEL.DUALINDIVIDUAL + " {node1_info}), "
-							+ "(" + node2.neo4jName + ":" + NODE_LABEL.DUALINDIVIDUAL + " {node2_info}) "
-							+ "CREATE (subject)-[:Subject]->(" + node1.neo4jName + "), "
-									+ "(subject)-[:Object]->(" + node2.neo4jName + "), "
-									+ "(object)-[:Subject]->(" + node2.neo4jName + "), "
-									+ "(object)-[:Object]->(" +node1.neo4jName + ")";
-			
-			tc.run(addDual, Values.parameters("node1_info", node1.info, 
-					"node2_info", node2.info, "s_iri", subject.toStringID(), "o_iri", object.toStringID()));
-			
-			//Neo4jUpdate.createNode(node1, NODE_LABEL.INDIVIDUAL, tc);
-			//Neo4jUpdate.createNode(node2, NODE_LABEL.INDIVIDUAL, tc);
-			
-			String so_iri = node1.info.get(NODE_KEY.NODE_IRI);
-			String os_iri = node2.info.get(NODE_KEY.NODE_IRI);
-			String p_iri = GraphNode.getPropertyIRI(property);
-			String ip_iri = GraphNode.getPropertyIRI(property.getInverseProperty());
-			
-			String statement1 = "MATCH (subject_object {" + NODE_KEY.NODE_IRI + ":{so_iri}}), (p {" + NODE_KEY.NODE_IRI + ":{p_iri}}), "
-					+ "(object_subject {" + NODE_KEY.NODE_IRI + ":{os_iri}}), (ip {" + NODE_KEY.NODE_IRI + ":{ip_iri}}) "
-					+ "CREATE (subject_object)-[:is]->(p), (object_subject)-[:is]->(ip)";
-			
-			tc.run(statement1, Values.parameters("so_iri", so_iri, 
-					"p_iri", p_iri, "os_iri", os_iri, "ip_iri", ip_iri));
-			
-			String subject_iri = subject.toStringID();
-			String object_iri = object.toStringID();
-			String rp_iri = GraphNode.getPRctClassIRI(property);
-			String rip_iri = GraphNode.getPRctClassIRI(property.getInverseProperty());
-			
-			String statement2 = "MATCH (subject {" + NODE_KEY.NODE_IRI + ":{siri}}), (p {" + NODE_KEY.NODE_IRI + ":{piri}}), "
-					+ "(object {" + NODE_KEY.NODE_IRI + ":{oiri}}), (ip {" + NODE_KEY.NODE_IRI + ":{ipiri}}) "
-					+ "CREATE (subject)-[:is]->(p), (object)-[:is]->(ip)";
-			
-			tc.run(statement2, Values.parameters("siri", subject_iri,
-					"piri", rp_iri, "oiri", object_iri, "ipiri", rip_iri));
-			tc.success();
-		}
+//		public void visit(OWLClassAssertionAxiom axiom) {
+//			OWLClassExpression exp = axiom.getClassExpression();
+//			OWLIndividual idv = axiom.getIndividual();
+//			
+//			String iri = exp.accept(getExpIRI);
+//			
+//			Neo4jUpdate.matchAndcreateRelation(idv.toStringID(), iri, "is", tc);;
+//		};
+//		public void visit(OWLObjectPropertyAssertionAxiom axiom) {
+//			OWLIndividual subject = axiom.getSubject();
+//			OWLIndividual object = axiom.getObject();
+//			OWLObjectPropertyExpression property = axiom.getProperty();
+//			
+//			GraphNode node1 = new GraphNode(subject, object);
+//			GraphNode node2 = new GraphNode(object, subject);
+//			
+//			String addDual = "MATCH (subject {" + NODE_KEY.NODE_IRI + ":{s_iri}}), (object {" + NODE_KEY.NODE_IRI + ":{o_iri}}) " 
+//							+ "CREATE (" + node1.neo4jName + ":" + NODE_LABEL.DUALINDIVIDUAL + " {node1_info}), "
+//							+ "(" + node2.neo4jName + ":" + NODE_LABEL.DUALINDIVIDUAL + " {node2_info}) "
+//							+ "CREATE (subject)-[:Subject]->(" + node1.neo4jName + "), "
+//									+ "(subject)-[:Object]->(" + node2.neo4jName + "), "
+//									+ "(object)-[:Subject]->(" + node2.neo4jName + "), "
+//									+ "(object)-[:Object]->(" +node1.neo4jName + ")";
+//			
+//			tc.run(addDual, Values.parameters("node1_info", node1.info, 
+//					"node2_info", node2.info, "s_iri", subject.toStringID(), "o_iri", object.toStringID()));
+//			
+//			//Neo4jUpdate.createNode(node1, NODE_LABEL.INDIVIDUAL, tc);
+//			//Neo4jUpdate.createNode(node2, NODE_LABEL.INDIVIDUAL, tc);
+//			
+//			String so_iri = node1.info.get(NODE_KEY.NODE_IRI);
+//			String os_iri = node2.info.get(NODE_KEY.NODE_IRI);
+//			String p_iri = GraphNode.getPropertyIRI(property);
+//			String ip_iri = GraphNode.getPropertyIRI(property.getInverseProperty());
+//			
+//			String statement1 = "MATCH (subject_object {" + NODE_KEY.NODE_IRI + ":{so_iri}}), (p {" + NODE_KEY.NODE_IRI + ":{p_iri}}), "
+//					+ "(object_subject {" + NODE_KEY.NODE_IRI + ":{os_iri}}), (ip {" + NODE_KEY.NODE_IRI + ":{ip_iri}}) "
+//					+ "CREATE (subject_object)-[:is]->(p), (object_subject)-[:is]->(ip)";
+//			
+//			tc.run(statement1, Values.parameters("so_iri", so_iri, 
+//					"p_iri", p_iri, "os_iri", os_iri, "ip_iri", ip_iri));
+//			
+//			String subject_iri = subject.toStringID();
+//			String object_iri = object.toStringID();
+//			String rp_iri = GraphNode.getPRctClassIRI(property);
+//			String rip_iri = GraphNode.getPRctClassIRI(property.getInverseProperty());
+//			
+//			String statement2 = "MATCH (subject {" + NODE_KEY.NODE_IRI + ":{siri}}), (p {" + NODE_KEY.NODE_IRI + ":{piri}}), "
+//					+ "(object {" + NODE_KEY.NODE_IRI + ":{oiri}}), (ip {" + NODE_KEY.NODE_IRI + ":{ipiri}}) "
+//					+ "CREATE (subject)-[:is]->(p), (object)-[:is]->(ip)";
+//			
+//			tc.run(statement2, Values.parameters("siri", subject_iri,
+//					"piri", rp_iri, "oiri", object_iri, "ipiri", rip_iri));
+//			tc.success();
+//		}
+		
 		public void visit(OWLDisjointClassesAxiom axiom) {
 			OWLPairwiseVoidVisitor<OWLClassExpression> _visitor = new OWLPairwiseVoidVisitor<OWLClassExpression>() {
 				@Override
@@ -120,8 +121,9 @@ public class GraphManager {
 					String a_iri = a.accept(getExpIRI);
 					GraphNode negationNode = GraphNode.getClassNodeByClassExpression(b, true);
 					
-					tc.run("MATCH (a {" + NODE_KEY.NODE_IRI + ":{a_iri}}) MERGE (b {" + NODE_KEY.NODE_IRI + ":{b_info}.iri}) "
-							+ "ON CREATE SET b:" + GraphNode.NODE_LABEL.NEGATION + ", b = {b_info} CREATE (a)-[:SubOf]->(b)", 
+					tc.run("MATCH (a:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI + ":{a_iri}}) "
+							+ "MERGE (b:" + GraphNode.NODE_LABEL.NEGATION + " {" + NODE_KEY.NODE_IRI + ":{b_info}.iri}) "
+							+ "ON CREATE SET b = {b_info} CREATE (a)-[:SubOf]->(b)", 
 							Values.parameters("a_iri", a_iri, "b_info", negationNode.info));
 					tc.success();
 				}
@@ -132,7 +134,7 @@ public class GraphManager {
 //			System.out.println(axiom);
 			String sub_iri = axiom.getSubClass().accept(getExpIRI);
 			String super_iri = axiom.getSuperClass().accept(getExpIRI);
-			Neo4jUpdate.matchAndcreateRelation(sub_iri, super_iri, "SubOf", tc);
+			Neo4jUpdate.matchAndcreateRelation(sub_iri, super_iri, NODE_LABEL.TBOXENTITY, "SubOf", tc);
 		};
 		public void visit(OWLEquivalentClassesAxiom axiom) {
 			OWLPairwiseVoidVisitor<OWLClassExpression> _vistor = new OWLPairwiseVoidVisitor<OWLClassExpression>() {
@@ -141,7 +143,8 @@ public class GraphManager {
 					String a_iri = a.accept(getExpIRI);
 					String b_iri = b.accept(getExpIRI);
 					
-					tc.run("MATCH (a {" + NODE_KEY.NODE_IRI + ":{a_iri}}), (b {" + NODE_KEY.NODE_IRI + ":{b_iri}}) CREATE (a)-[:SubOf]->(b) CREATE (b)-[:SubOf]->(a)",
+					tc.run("MATCH (a:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI + ":{a_iri}}), "
+							+ "(b:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI + ":{b_iri}}) CREATE (a)-[:SubOf]->(b) CREATE (b)-[:SubOf]->(a)",
 							Values.parameters("a_iri", a_iri, "b_iri", b_iri));
 					tc.success();
 				}
@@ -157,16 +160,16 @@ public class GraphManager {
 			String i_subp_iri = GraphNode.getPropertyIRI(subp.getInverseProperty());
 			String i_superp_iri = GraphNode.getPropertyIRI(superp.getInverseProperty());
 			
-			Neo4jUpdate.matchAndcreateRelation(subp_iri, superp_iri, "SubOf", tc);
-			Neo4jUpdate.matchAndcreateRelation(i_subp_iri, i_superp_iri, "SubOf", tc);
+			Neo4jUpdate.matchAndcreateRelation(subp_iri, superp_iri, NODE_LABEL.TBOXENTITY, "SubOf", tc);
+			Neo4jUpdate.matchAndcreateRelation(i_subp_iri, i_superp_iri, NODE_LABEL.TBOXENTITY, "SubOf", tc);
 			
 			String rt_subp_iri = GraphNode.getPRctClassIRI(subp);
 			String rt_superp_iri = GraphNode.getPRctClassIRI(superp);
 			String rt_i_subp_iri = GraphNode.getPRctClassIRI(subp.getInverseProperty());
 			String rt_i_superp_iri = GraphNode.getPRctClassIRI(superp.getInverseProperty());
 			
-			Neo4jUpdate.matchAndcreateRelation(rt_subp_iri, rt_superp_iri, "SubOf", tc);
-			Neo4jUpdate.matchAndcreateRelation(rt_i_subp_iri, rt_i_superp_iri, "SubOf", tc);
+			Neo4jUpdate.matchAndcreateRelation(rt_subp_iri, rt_superp_iri, NODE_LABEL.TBOXENTITY, "SubOf", tc);
+			Neo4jUpdate.matchAndcreateRelation(rt_i_subp_iri, rt_i_superp_iri, NODE_LABEL.TBOXENTITY, "SubOf", tc);
 		};
 		public void visit(OWLDisjointObjectPropertiesAxiom axiom) {
 			OWLPairwiseVoidVisitor<OWLObjectPropertyExpression> _vistor = new OWLPairwiseVoidVisitor<OWLObjectPropertyExpression>() {
@@ -177,9 +180,9 @@ public class GraphManager {
 					String a_iri = GraphNode.getPropertyIRI(a);
 					String ia_iri = GraphNode.getPropertyIRI(a.getInverseProperty());
 					
-					String statement1 = "MATCH (a {" + NODE_KEY.NODE_IRI + ":{a_iri}}) MATCH (ia {" + NODE_KEY.NODE_IRI + ":{ia_iri}}) "
-									+ "MERGE (nb {" + NODE_KEY.NODE_IRI + ":{nb_info}." + NODE_KEY.NODE_IRI + "}) ON CREATE SET nb:" + GraphNode.NODE_LABEL.NEGATION + ", nb = {nb_info} "
-									+ "MERGE (nib {" + NODE_KEY.NODE_IRI + ":{nib_info}." + NODE_KEY.NODE_IRI + "}) ON CREATE SET nib:" + GraphNode.NODE_LABEL.NEGATION + ", nib = {nib_info} "
+					String statement1 = "MATCH (a:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI + ":{a_iri}}) MATCH (ia:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI + ":{ia_iri}}) "
+									+ "MERGE (nb:" + GraphNode.NODE_LABEL.NEGATION + " {" + NODE_KEY.NODE_IRI + ":{nb_info}." + NODE_KEY.NODE_IRI + "}) ON CREATE SET nb = {nb_info} "
+									+ "MERGE (nib:" + GraphNode.NODE_LABEL.NEGATION + " {" + NODE_KEY.NODE_IRI + ":{nib_info}." + NODE_KEY.NODE_IRI + "}) ON CREATE SET nib = {nib_info} "
 									+ "CREATE (a)-[:SubOf]->(nb), (ia)-[:SubOf]->(nib)";
 					
 					tc.run(statement1, Values.parameters("a_iri", a_iri, 
@@ -191,9 +194,9 @@ public class GraphManager {
 					String ra_iri = GraphNode.getPRctClassIRI(a);
 					String ria_iri = GraphNode.getPRctClassIRI(a.getInverseProperty());
 					
-					String statement2 = "MATCH (ra {" + NODE_KEY.NODE_IRI + ":{ra_iri}}) MATCH (ria {" + NODE_KEY.NODE_IRI + ":{ria_iri}}) "
-							+ "MERGE (nrb {" + NODE_KEY.NODE_IRI + ":{nrb_info}." + NODE_KEY.NODE_IRI + "}) ON CREATE SET nrb:" + GraphNode.NODE_LABEL.NEGATION + ", nrb = {nrb_info} "
-							+ "MERGE (nrib {" + NODE_KEY.NODE_IRI + ":{nrib_info}." + NODE_KEY.NODE_IRI + "}) ON CREATE SET nrib:" + GraphNode.NODE_LABEL.NEGATION + ", nrib = {nrib_info} "
+					String statement2 = "MATCH (ra:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI + ":{ra_iri}}) MATCH (ria:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI + ":{ria_iri}}) "
+							+ "MERGE (nrb:" + GraphNode.NODE_LABEL.NEGATION + " {" + NODE_KEY.NODE_IRI + ":{nrb_info}." + NODE_KEY.NODE_IRI + "}) ON CREATE SET nrb = {nrb_info} "
+							+ "MERGE (nrib:" + GraphNode.NODE_LABEL.NEGATION + " {" + NODE_KEY.NODE_IRI + ":{nrib_info}." + NODE_KEY.NODE_IRI + "}) ON CREATE SET nrib = {nrib_info} "
 							+ "CREATE (ra)-[:SubOf]->(nrb), (ria)-[:SubOf]->(nrib)";
 			
 					tc.run(statement2, Values.parameters("ra_iri", ra_iri,
@@ -225,6 +228,8 @@ public class GraphManager {
 		
 		try(Transaction tc = session.beginTransaction()) {
 			Neo4jUpdate.buildIndex(NODE_LABEL.TBOXENTITY, NODE_KEY.NODE_IRI, tc); 
+			Neo4jUpdate.buildIndex(NODE_LABEL.TBOXENTITY, NODE_KEY.IRI_LOWER, tc);
+			Neo4jUpdate.buildIndex(NODE_LABEL.NEGATION, NODE_KEY.NODE_IRI, tc);
 		}
 		
 		System.out.println("Inserting nodes for Ontology Entities ...");
@@ -254,11 +259,6 @@ public class GraphManager {
 		
 		try(Transaction tc = session.beginTransaction()) {
 			tc.run("MATCH (n:" + NODE_LABEL.TBOXENTITY + ") SET n." + NODE_KEY.IRI_LOWER + " = LOWER(n." + NODE_KEY.NODE_IRI + ")");
-			tc.success();
-		}
-		
-		try(Transaction tc = session.beginTransaction()) {
-			tc.run("CREATE INDEX ON :" + NODE_LABEL.TBOXENTITY + "(" + NODE_KEY.IRI_LOWER + ")");
 			tc.success();
 		}
 		

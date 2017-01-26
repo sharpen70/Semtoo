@@ -26,8 +26,8 @@ public class Neo4jUpdate {
 		tc.success();
 	}
 	
-	public static void matchAndcreateRelation(String from, String to, String relationLabel, Transaction tc) {
-		tc.run("MATCH (a {" + NODE_KEY.NODE_IRI + ":{a_iri}}), (b {" + NODE_KEY.NODE_IRI + ":{b_iri}}) CREATE (a)-[:" + relationLabel + "]->(b)", 
+	public static void matchAndcreateRelation(String from, String to, String nodeLabel, String relationLabel, Transaction tc) {
+		tc.run("MATCH (a:" + nodeLabel + " {" + NODE_KEY.NODE_IRI + ":{a_iri}}), (b {" + NODE_KEY.NODE_IRI + ":{b_iri}}) CREATE (a)-[:" + relationLabel + "]->(b)", 
 				Values.parameters("a_iri", from, "b_iri", to));
 		tc.success();
 	}
