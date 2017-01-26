@@ -34,9 +34,9 @@ public class TestQueryAnswering {
 //			System.out.println(q1);
 			IAR qa = new IAR();
 			
-			//qa.detectConflicts();
+			System.out.println("Detecting conflicts...");
 			long start = System.currentTimeMillis();
-			qa.answer(q);
+			qa.detectConflicts();
 			long end = System.currentTimeMillis();
 			System.out.println("USING " + (end - start) + " ms ...");
 	}

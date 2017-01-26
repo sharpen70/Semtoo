@@ -30,12 +30,19 @@ public class IAR implements ICTolerant_QA {
 	public void detectConflicts() {
 		try(Session session = m.getSession()) {
 			try(Transaction tc = session.beginTransaction()) {
-				String statement = "MATCH (a)-[r1:is]->(b)-[*0..]->(c), "
+				String statement = "MATCH (a:" + NODE_LABEL.INDIVIDUAL + ")-[r1:is]->(b:" + NODE_LABEL.TBOXENTITY 
+						+ ")-[*0..]->(c:" + NODE_LABEL.TBOXENTITY + "), "
 						+ "(a)-[r2:is]->(nb)-[*0..]->(n:" + NODE_LABEL.NEGATION +") "
 						+ "WHERE n." + NODE_KEY.POSITIVE_NODE_IRI + " = c." + NODE_KEY.NODE_IRI + " "
-						+ "DELETE r1, r2";
-				tc.run(statement);
-				tc.success();
+						+ "RETURN a." + NODE_KEY.NODE_IRI + ", b." + NODE_KEY.NODE_IRI + ", nb." + NODE_KEY.NODE_IRI;
+				System.out.println(statement);
+//				StatementResult result = tc.run(statement);
+//				while(result.hasNext()) {
+//					Record r = result.next();
+//					for(Pair<String, Value> p : r.fields()) {
+//						System.out.println(p.value() + " ");
+//					}
+//				}
 			}	
 		}
 	}
