@@ -51,101 +51,76 @@ public class DBFileReader {
 			}
 			
 			try(Transaction tc = session.beginTransaction()) {				
-			while(scanner.hasNextLine()) {
-				String line = scanner.nextLine();
-				if(line.contains("COPY")) {
-					String predicate_name = Helper.singleMatch(line, "^COPY\\s([^\\s(]*)");
-					if(predicate_name == null) break;
-					String predicate_iri = prefix + predicate_name;
-					
-					String data = scanner.nextLine();
-					while(!data.matches("^\\\\.")) {
-						Pattern data_pattern = Pattern.compile("[\\S]+");
-						Matcher matcher = data_pattern.matcher(data);
+				while(scanner.hasNextLine()) {
+					String line = scanner.nextLine();
+					if(line.contains("COPY")) {
+						String predicate_name = Helper.singleMatch(line, "^COPY\\s([^\\s(]*)");
+						if(predicate_name == null) break;
+						String predicate_iri = prefix + predicate_name;
 						
-						String term1 = null;
-						String term2 = null;
-						
-						if(matcher.find()) {
-							term1 = matcher.group();
+						String data = scanner.nextLine();
+						while(!data.matches("^\\\\.")) {
+							Pattern data_pattern = Pattern.compile("[\\S]+");
+							Matcher matcher = data_pattern.matcher(data);
+							
+							String term1 = null;
+							String term2 = null;
+							
 							if(matcher.find()) {
-								term2 = matcher.group();
+								term1 = matcher.group();
+								if(matcher.find()) {
+									term2 = matcher.group();
+								}
 							}
-						}
-						
-						if(term1 != null) {
-							if(term2 != null) {
-								String ab_iri = term1 + "_" + term2;
-								String ba_iri = term2 + "_" + term1;
-								String inv_predicate_iri = GraphNode.INV_PREFIX + predicate_iri;
-								String prt_iri = GraphNode.PRT_PREFIX + predicate_iri;
-								String inv_prt_iri = GraphNode.PRT_PREFIX + GraphNode.INV_PREFIX + predicate_iri;
-								
-								String statement = 
-//										"MERGE (a:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":\"" + term1 + "\"})"
-//										+ " MERGE (b:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":\"" + term2 + "\"})"
-//										+ " MERGE (ab:" + NODE_LABEL.DUALINDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":\"" + ab_iri + "\"})"
-//										+ " ON CREATE SET ab." + NODE_KEY.SUBJECT_IRI + "=\"" + term1 + "\", ab." + NODE_KEY.OBJECT_IRI + "=\"" + term2 + "\""
-//										+ " MERGE (ba:" + NODE_LABEL.DUALINDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":\"" + ba_iri + "\"})"
-//										+ " ON CREATE SET ba." + NODE_KEY.SUBJECT_IRI + "=\"" + term2 + "\", ba." + NODE_KEY.OBJECT_IRI + "=\"" + term1 + "\""
-//										+ " MERGE (a)-[:Subject]->(ab) MERGE (a)-[:Object]->(ba)"
-//										+ " MERGE (b)-[:Subject]->(ba) MERGE (b)-[:Object]->(ab)"
-//										+ " WITH a, b, ab, ba"
-//										+ " MATCH (p:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":\"" + predicate_iri + "\"}),"
-//										+ " (ip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":\"" + inv_predicate_iri + "\"}),"
-//										+ " (rp:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":\"" + prt_iri + "\"}),"
-//										+ " (rip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":\"" + inv_prt_iri + "\"})"
-//										+ " CREATE (ab)-[:is]->(p), (ba)-[:is]->(ip)"
-//										+ " MERGE (a)-[:is]->(rp) MERGE (b)-[:is]->(rip)";
-										"MERGE (a:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{term1}})"
-										+ " MERGE (b:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{term2}})"
-										+ " MERGE (ab:" + NODE_LABEL.DUALINDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{ab_iri}})"
-										+ " ON CREATE SET ab." + NODE_KEY.SUBJECT_IRI + "={term1}, ab." + NODE_KEY.OBJECT_IRI + "={term2}"
-										+ " MERGE (ba:" + NODE_LABEL.DUALINDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{ba_iri}})"
-										+ " ON CREATE SET ba." + NODE_KEY.SUBJECT_IRI + "={term2}, ba." + NODE_KEY.OBJECT_IRI + "={term1}"
-										+ " WITH a, b, ab, ba"
-										+ " MATCH (p:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{p_iri}}),"
-										+ " (ip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{inv_p_iri}}),"
-										+ " (rp:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{prt_iri}}),"
-										+ " (rip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{inv_prt_iri}})"
-										+ " CREATE (ab)-[:is]->(p), (ba)-[:is]->(ip)"
-										+ " MERGE (a)-[:is]->(rp) MERGE (b)-[:is]->(rip)";
-								tc.run(statement, Values.parameters("term1", term1, "term2", term2, "ab_iri", ab_iri, "ba_iri", ba_iri, 
-										"p_iri", predicate_iri, "inv_p_iri", inv_predicate_iri, "prt_iri", prt_iri, "inv_prt_iri", inv_prt_iri));
-								tc.success();
+							
+							if(term1 != null) {
+								if(term2 != null) {
+									String ab_iri = term1 + "_" + term2;
+									String ba_iri = term2 + "_" + term1;
+									String inv_predicate_iri = GraphNode.INV_PREFIX + predicate_iri;
+									String prt_iri = GraphNode.PRT_PREFIX + predicate_iri;
+									String inv_prt_iri = GraphNode.PRT_PREFIX + GraphNode.INV_PREFIX + predicate_iri;
+									
+									String statement = 
+											"MERGE (a:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{term1}})"
+											+ " MERGE (b:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{term2}})"
+											+ " MERGE (ab:" + NODE_LABEL.DUALINDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{ab_iri}})"
+											+ " ON CREATE SET ab." + NODE_KEY.SUBJECT_IRI + "={term1}, ab." + NODE_KEY.OBJECT_IRI + "={term2}"
+											+ " MERGE (ba:" + NODE_LABEL.DUALINDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{ba_iri}})"
+											+ " ON CREATE SET ba." + NODE_KEY.SUBJECT_IRI + "={term2}, ba." + NODE_KEY.OBJECT_IRI + "={term1}"
+											+ " WITH a, b, ab, ba"
+											+ " MATCH (p:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{p_iri}}),"
+											+ " (ip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{inv_p_iri}}),"
+											+ " (rp:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{prt_iri}}),"
+											+ " (rip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{inv_prt_iri}})"
+											+ " CREATE (ab)-[:is]->(p), (ba)-[:is]->(ip)"
+											+ " MERGE (a)-[:is]->(rp) MERGE (b)-[:is]->(rip)";
+									tc.run(statement, Values.parameters("term1", term1, "term2", term2, "ab_iri", ab_iri, "ba_iri", ba_iri, 
+											"p_iri", predicate_iri, "inv_p_iri", inv_predicate_iri, "prt_iri", prt_iri, "inv_prt_iri", inv_prt_iri));
+									tc.success();
+								}
+								else {
+									String statement = "MERGE (a:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{term1}}) "
+											+ "WITH a MATCH (p:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{p_iri}}) "
+													+ "CREATE (a)-[:is]->(p)";
+									tc.run(statement, Values.parameters("term1", term1, "p_iri", predicate_iri));
+									tc.success();
+								}
+								rc++;
+								ic++;
 							}
-							else {
-								String statement = "MERGE (a:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{term1}}) "
-										+ "WITH a MATCH (p:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{p_iri}}) "
-												+ "CREATE (a)-[:is]->(p)";
-								tc.run(statement, Values.parameters("term1", term1, "p_iri", predicate_iri));
-								tc.success();
+							
+							if(rc >= 100) {
+								read_count += rc;
+								rc = 0;
+								long end = System.currentTimeMillis();
+								System.out.println("Done reading of " + read_count + " assertion records with " + (end - start) + " ms");
 							}
-							rc++;
-							ic++;
+							data = scanner.nextLine();
 						}
-						
-						if(rc >= 100) {
-							read_count += rc;
-							rc = 0;
-							long end = System.currentTimeMillis();
-							System.out.println("Done reading of " + read_count + " assertion records with " + (end - start) + " ms");
-						}
-					//	if(read_count >= 2000) break;
-//						if(ic >= 10000) {
-//							tc.close();
-//							tc = session.beginTransaction();
-//							insert_count += ic;
-//							ic = 0;
-//							long end = System.currentTimeMillis();
-//							System.out.println("Done inserting of " + insert_count + " assertion records with " + (end - start) / 1000 + " ms");
-//						}
-						data = scanner.nextLine();
 					}
-					//if(read_count >= 2000) break;
-				}
+				}			
 			}
-			}//tc.close();
 		}
 		scanner.close();
 	}
