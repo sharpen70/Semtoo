@@ -30,12 +30,18 @@ public class IAR implements ICTolerant_QA {
 	public void detectConflicts() {
 		try(Session session = m.getSession()) {
 			try(Transaction tc = session.beginTransaction()) {
-				String statement = "MATCH (a:" + NODE_LABEL.INDIVIDUAL + ")-[r1:is]->(b:" + NODE_LABEL.TBOXENTITY 
-						+ ")-[*0..]->(c:" + NODE_LABEL.TBOXENTITY + "), "
-						+ "(a)-[r2:is]->(nb)-[*0..]->(n:" + NODE_LABEL.NEGATION +") "
-						+ "WHERE n." + NODE_KEY.POSITIVE_NODE_IRI + " = c." + NODE_KEY.NODE_IRI + " "
-						+ "RETURN a." + NODE_KEY.NODE_IRI + ", b." + NODE_KEY.NODE_IRI + ", nb." + NODE_KEY.NODE_IRI;
-				System.out.println(statement);
+				String ostatement = "CYPHER PLANNER = RULE MATCH (a:" + NODE_LABEL.TBOXENTITY + ")-[:SubOf*0..]->(b:" + NODE_LABEL.TBOXENTITY + "),"
+						+ " (c:" + NODE_LABEL.TBOXENTITY + ")-[SubOf*0..]->(nb:" + NODE_LABEL.NEGATION + ") "  
+						+ "USING SCAN nb:" + NODE_LABEL.NEGATION + " WHERE b." + NODE_KEY.NODE_IRI + " = nb." + NODE_KEY.POSITIVE_NODE_IRI
+						+ " WITH a, c MATCH (i:INDVIDUAL)-[:is]->(a), (i)-[:is]->(c) "
+						+ "RETURN DISTINCT i." + NODE_KEY.NODE_IRI + ", a." + NODE_KEY.NODE_IRI + ", c." + NODE_KEY.NODE_IRI;
+						
+//				String statement = "MATCH (a:" + NODE_LABEL.INDIVIDUAL + ")-[r1:is]->(b:" + NODE_LABEL.TBOXENTITY 
+//						+ ")-[*0..]->(c:" + NODE_LABEL.TBOXENTITY + "), "
+//						+ "(a)-[r2:is]->(nb)-[*0..]->(n:" + NODE_LABEL.NEGATION +") "
+//						+ "WHERE n." + NODE_KEY.POSITIVE_NODE_IRI + " = c." + NODE_KEY.NODE_IRI + " "
+//						+ "RETURN a." + NODE_KEY.NODE_IRI + ", b." + NODE_KEY.NODE_IRI + ", nb." + NODE_KEY.NODE_IRI;
+				System.out.println(ostatement);
 //				StatementResult result = tc.run(statement);
 //				while(result.hasNext()) {
 //					Record r = result.next();
