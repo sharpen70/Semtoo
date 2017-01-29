@@ -10,11 +10,11 @@ import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.Values;
 import org.neo4j.driver.v1.util.Pair;
+import org.semanticweb.semtoo.graph.GraphNode;
+import org.semanticweb.semtoo.graph.GraphNode.NODE_KEY;
+import org.semanticweb.semtoo.graph.GraphNode.NODE_LABEL;
 import org.semanticweb.semtoo.model.CQuery;
 import org.semanticweb.semtoo.model.Constant;
-import org.semanticweb.semtoo.model.GraphNode;
-import org.semanticweb.semtoo.model.GraphNode.NODE_KEY;
-import org.semanticweb.semtoo.model.GraphNode.NODE_LABEL;
 import org.semanticweb.semtoo.model.NaryAtom;
 import org.semanticweb.semtoo.model.Term;
 import org.semanticweb.semtoo.model.Variable;
@@ -31,16 +31,11 @@ public class IAR implements ICTolerant_QA {
 		try(Session session = m.getSession()) {
 			try(Transaction tc = session.beginTransaction()) {
 				String ostatement = "CYPHER PLANNER = RULE MATCH (a:" + NODE_LABEL.TBOXENTITY + ")-[:SubOf*0..]->(b:" + NODE_LABEL.TBOXENTITY + "),"
-						+ " (c:" + NODE_LABEL.TBOXENTITY + ")-[SubOf*0..]->(nb:" + NODE_LABEL.NEGATION + ") "  
+						+ " (c:" + NODE_LABEL.TBOXENTITY + ")-[:SubOf*0..]->(nb:" + NODE_LABEL.NEGATION + ") "  
 						+ "USING SCAN nb:" + NODE_LABEL.NEGATION + " WHERE b." + NODE_KEY.NODE_IRI + " = nb." + NODE_KEY.POSITIVE_NODE_IRI
-						+ " WITH a, c MATCH (i:INDVIDUAL)-[:is]->(a), (i)-[:is]->(c) "
+						+ " WITH a, c MATCH (i:" + NODE_LABEL.INDIVIDUAL + ")-[:is]->(a), (i)-[:is]->(c) "
 						+ "RETURN DISTINCT i." + NODE_KEY.NODE_IRI + ", a." + NODE_KEY.NODE_IRI + ", c." + NODE_KEY.NODE_IRI;
 						
-//				String statement = "MATCH (a:" + NODE_LABEL.INDIVIDUAL + ")-[r1:is]->(b:" + NODE_LABEL.TBOXENTITY 
-//						+ ")-[*0..]->(c:" + NODE_LABEL.TBOXENTITY + "), "
-//						+ "(a)-[r2:is]->(nb)-[*0..]->(n:" + NODE_LABEL.NEGATION +") "
-//						+ "WHERE n." + NODE_KEY.POSITIVE_NODE_IRI + " = c." + NODE_KEY.NODE_IRI + " "
-//						+ "RETURN a." + NODE_KEY.NODE_IRI + ", b." + NODE_KEY.NODE_IRI + ", nb." + NODE_KEY.NODE_IRI;
 				System.out.println(ostatement);
 //				StatementResult result = tc.run(statement);
 //				while(result.hasNext()) {
@@ -116,5 +111,10 @@ public class IAR implements ICTolerant_QA {
 		}
 		
 		return null;
+	}
+	
+	@Override
+	public void consistentBase() {
+		detectConflicts();
 	}
 }

@@ -5,8 +5,8 @@ import java.util.Map;
 
 import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.Values;
-import org.semanticweb.semtoo.model.GraphNode;
-import org.semanticweb.semtoo.model.GraphNode.NODE_KEY;
+import org.semanticweb.semtoo.graph.GraphNode;
+import org.semanticweb.semtoo.graph.GraphNode.NODE_KEY;
 
 public class Neo4jUpdate {
 
@@ -16,8 +16,12 @@ public class Neo4jUpdate {
 		}
 	}
 	
-	public static void createNode(GraphNode node, String label, Transaction tc) {
-		tc.run("CREATE (" + node.neo4jName + ":" + label + " {info})", Values.parameters("info", node.info));
+	public static void createNode(GraphNode node, Transaction tc, String... _labels) {
+		String labels = "";
+		for(String l : _labels) {
+			labels += ":" + l;
+		}
+		tc.run("CREATE (" + node.neo4jName + labels + " {info})", Values.parameters("info", node.info));
 		tc.success();
 	}
 	
@@ -27,7 +31,8 @@ public class Neo4jUpdate {
 	}
 	
 	public static void matchAndcreateRelation(String from, String to, String nodeLabel, String relationLabel, Transaction tc) {
-		tc.run("MATCH (a:" + nodeLabel + " {" + NODE_KEY.NODE_IRI + ":{a_iri}}), (b {" + NODE_KEY.NODE_IRI + ":{b_iri}}) CREATE (a)-[:" + relationLabel + "]->(b)", 
+		tc.run("MATCH (a:" + nodeLabel + " {" + NODE_KEY.NODE_IRI + ":{a_iri}}), (b:"
+				+ nodeLabel + " {" + NODE_KEY.NODE_IRI + ":{b_iri}}) CREATE (a)-[:" + relationLabel + "]->(b)", 
 				Values.parameters("a_iri", from, "b_iri", to));
 		tc.success();
 	}

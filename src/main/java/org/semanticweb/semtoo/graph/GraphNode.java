@@ -1,4 +1,4 @@
-package org.semanticweb.semtoo.model;
+package org.semanticweb.semtoo.graph;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,29 +17,6 @@ import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 
 public class GraphNode {
 	public Map<String, String> info = new HashMap<>();
-//	public Set<String> labels = new HashSet<>();
-	
-//	public static enum NODE_TYPE {
-//		PropertyRestrictionClass("PRctCls"),
-//		InverseOfPropertyRestrictionClass("invPRctCls"),
-//		Property("PR"),
-//		InverseOfProperty("invPR"),
-//		AtomicClass("AtomicCls"),
-//		NamedIndividual("NamedIdv"),
-//		AnonymousIndividual("AnonyIdv"),
-//		DualIndividual("DualIdv");
-//		
-//		private String value;
-//		
-//		private NODE_TYPE(String t) {
-//			value = t;
-//		}
-//		
-//		@Override
-//		public String toString() {
-//			return value;
-//		}
-//	}
 	
 	public static class NODE_TYPE  {
 		public static final String PropertyRestrictionClass = "PRctCls";
@@ -53,11 +30,13 @@ public class GraphNode {
 	}
 	
 	public static class NODE_LABEL {
-		public static final String OWLENTITY = "OWLEN";
 		public static final String NEGATION = "NEG";
 		public static final String TBOXENTITY = "TBEN";
 		public static final String INDIVIDUAL = "INDIVIDUAL";
 		public static final String DUALINDIVIDUAL = "DUAL";
+		public static final String DISCARD = "DISC";
+		public static final String PROPERTY = "PP";
+		public static final String CLASS = "CLS";
 	}
 	
 	public static class NODE_KEY {
@@ -112,11 +91,8 @@ public class GraphNode {
 	public GraphNode(OWLIndividual idv) {
 		String iri = idv.toStringID();
 		
-//		labels.add(NODE_LABEL.OWLENTITY);
-		
 		info.put(NODE_KEY.NODE_IRI, iri);
 		neo4jName = iri.split("#")[1];
-		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.NamedIndividual);
 		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
 	}
 	
@@ -129,7 +105,6 @@ public class GraphNode {
 		info.put(NODE_KEY.NODE_IRI, a_iri + "_" + b_iri);
 		info.put(NODE_KEY.SUBJECT_IRI, a_iri);
 		info.put(NODE_KEY.OBJECT_IRI, b_iri);
-		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.DualIndividual);
 		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
 	}
 	
@@ -174,8 +149,6 @@ public class GraphNode {
 		//Temporary Solution, need to revise in the future
 		neo4jName = description;
 		
-//		labels.add(NODE_LABEL.OWLENTITY);
-		
 		info.put(NODE_KEY.NODE_IRI, iri);		
 		info.put(NODE_KEY.NODE_DESCRIBTION, description);		
 		info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.AtomicClass);
@@ -217,57 +190,10 @@ public class GraphNode {
 		
 		return n;
 	}
-//	public GraphNode(OWLObjectPropertyExpression p) {
-//		String iri = p.getNamedProperty().toStringID();
-//		String t;
-//		
-////		labels.add(NODE_LABEL.OWLENTITY);
-//		
-//		if(p instanceof OWLObjectInverseOf) {
-//			t = NODE_TYPE.InverseOfPropertyRestrictionClass;
-//			neo4jName =  PRT_PREFIX + INV_PREFIX + iri.split("#")[1];
-//			info.put(NODE_KEY.NODE_IRI, t + "_" + iri);
-//		}
-//		else {
-//			t = NODE_TYPE.PropertyRestrictionClass;
-//			neo4jName =  PRT_PREFIX + iri.split("#")[1];
-//		}
-//		
-//		neo4jName = t + "_" + iri.split("#")[1];
-//		
-//		info.put(NODE_KEY.NODE_IRI, t + "_" + iri);
-//		info.put(NODE_KEY.NODE_TYPE, t.toString());
-//		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
-//		info.put(NODE_KEY.PROPERTY_IRI, iri);
-//	}
-	
-//	public GraphNode(OWLObjectSomeValuesFrom svf) {
-//		OWLObjectPropertyExpression p = svf.getProperty();
-//		
-////		labels.add(NODE_LABEL.OWLENTITY);
-//		
-//		String iri = p.getNamedProperty().toStringID();;
-//		if(p instanceof OWLObjectInverseOf) {
-//			neo4jName = NODE_TYPE.InverseOfPropertyRestrictionClass + "_" + iri.split("#")[1];
-//			
-//			info.put(NODE_KEY.NODE_IRI, NODE_TYPE.InverseOfPropertyRestrictionClass + "_" + iri);
-//			info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.InverseOfPropertyRestrictionClass);
-//		}
-//		else {
-//			neo4jName = NODE_TYPE.PropertyRestrictionClass + "_" + iri.split("#")[1];
-//			
-//			info.put(NODE_KEY.NODE_IRI,  NODE_TYPE.PropertyRestrictionClass + "_" + iri);
-//			info.put(NODE_KEY.NODE_TYPE, NODE_TYPE.PropertyRestrictionClass);
-//		}
-//		info.put(NODE_KEY.NODE_DESCRIBTION, neo4jName);
-//		info.put(NODE_KEY.PROPERTY_IRI, iri);
-//	}
 	
 	private void toNegation() {
 		String iri = info.get(NODE_KEY.NODE_IRI);
 		String new_iri = NEG_PREFIX + iri;
-		
-//		labels.add(NODE_LABEL.NEGATION);
 		
 		info.put(NODE_KEY.POSITIVE_NODE_IRI, iri);
 		info.put(NODE_KEY.NODE_IRI, new_iri);

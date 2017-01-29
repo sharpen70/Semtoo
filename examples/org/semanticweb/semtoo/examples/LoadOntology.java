@@ -34,7 +34,8 @@ public class LoadOntology {
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		
 		File lubm = new File("./resources/LUBM_DLlite.owl");
-		File lubm_data = new File("C:/Users/s5051530/Downloads/SaQAI/SaQAI_latest/Databases/u5p2e-1.sql");
+		File lubm_data = new File("./resources/u1p0.sql");
+//		File lubm_data = new File("C:/Users/s5051530/Downloads/SaQAI/SaQAI_latest/Databases/u5p2e-1.sql");
 		//	OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File("./resources/pizza.owl"));			
 		
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(lubm);	

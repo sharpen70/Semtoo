@@ -1,6 +1,7 @@
 package org.semanticweb.semtoo.examples;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -18,7 +19,9 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.PrefixManager;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.semtoo.Forgetting;
-import org.semanticweb.semtoo.graph.GraphManager;
+import org.semanticweb.semtoo.graph.GraphAnalyzer;
+import org.semanticweb.semtoo.graph.GraphAnalyzer.ORDER;
+import org.semanticweb.semtoo.neo4j.Neo4jManager;
 
 public class TestForgetting {
 	static final String _prefix = "http://org.semanticweb.semtoo/example";
@@ -75,13 +78,30 @@ public class TestForgetting {
 	}
 	
 	public static void main(String[] args) throws OWLException {
-		GraphManager gm = new GraphManager();
-		gm.loadOntologyToGraph(createTestOntology());
+//		GraphManager gm = new GraphManager();
+//		gm.loadOntologyToGraph(createTestOntology());
+		Neo4jManager m  = Neo4jManager.getManager();
 		
+//		Collection<String> concepts = GraphAnalyzer.getConceptsByDegree(30, ORDER.ASC);
+		Collection<String> concepts = GraphAnalyzer.getRandomGroupConcepts(30);
+		
+		long start = System.currentTimeMillis();
+		for(String iri : concepts) {
+			System.out.println(iri);
+		}
+		long end = System.currentTimeMillis();
+		
+		System.out.println("Done with " + (end -start) + " ms\n");
 		
 //		Forgetting f = new Forgetting();
+//		f.restoreDiscard();
 //		
-//		List<String> fs = new ArrayList<>();
+//		System.out.println("Going with Batch Forgetting ...");
+//		start = System.currentTimeMillis();
+//		f.naiveForget(concepts);
+//		end = System.currentTimeMillis();
+//		System.out.println("Done with " + (end -start) + " ms\n");
+		
 //		fs.add(_prefix + "#B");
 //		fs.add(_prefix + "#A");
 		

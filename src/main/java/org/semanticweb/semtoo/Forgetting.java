@@ -8,9 +8,9 @@ import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.Values;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.semtoo.model.GraphNode;
-import org.semanticweb.semtoo.model.GraphNode.NODE_KEY;
-import org.semanticweb.semtoo.model.GraphNode.NODE_LABEL;
+import org.semanticweb.semtoo.graph.GraphNode;
+import org.semanticweb.semtoo.graph.GraphNode.NODE_KEY;
+import org.semanticweb.semtoo.graph.GraphNode.NODE_LABEL;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 import org.semanticweb.semtoo.neo4j.Neo4jUpdate;
 
@@ -23,12 +23,24 @@ public class Forgetting {
 		manager = Neo4jManager.getManager();
 	}
 	
+	public void restoreDiscard() {
+		try(Session session = manager.getSession()) {
+			try(Transaction tc = session.beginTransaction()) {
+				String statement = "MATCH (n:" + NODE_LABEL.DISCARD + ")"
+						+ " REMOVE n:" + NODE_LABEL.DISCARD 
+						+ " SET n:" + NODE_LABEL.TBOXENTITY;
+				tc.run(statement);
+				tc.success();
+			}
+		}
+	}
+	
 	//Forgets a set of concepts
 	
 	//Forgets a set of concepts simply one by one
 	public void naiveForget(Collection<String> conceptsToforget) {
-		for(String iri : conceptsToforget) {
-			forget(iri);
+		try(Session session = manager.getSession()) {
+			for(String iri : conceptsToforget) forget(iri, session);
 		}
 	}
 	
@@ -79,38 +91,46 @@ public class Forgetting {
 	
 	//Forgets One Single Concept
 	public void forget(String iriOfConceptToforget) {
-		System.out.println("Forgetting concept: " + iriOfConceptToforget);
 		try(Session session = manager.getSession()) {
+			forget(iriOfConceptToforget, session);
+		}
+	}
+	
+	public void forget(String iriOfConceptToforget, Session session) {
+		System.out.println("Forgetting concept: " + iriOfConceptToforget);
+		try(Transaction tc = session.beginTransaction()) {
+			removeMeaningless(iriOfConceptToforget, tc);
+			changeNegationDirection(iriOfConceptToforget, tc);				
+		}
+		
+		if(isContradictionClass(iriOfConceptToforget, session)) {
 			try(Transaction tc = session.beginTransaction()) {
-				removeMeaningless(iriOfConceptToforget, tc);
-				changeNegationDirection(iriOfConceptToforget, tc);				
-			}
-			
-			if(isContradictionClass(iriOfConceptToforget, session)) {
-				try(Transaction tc = session.beginTransaction()) {
-					removeContradictionClass(iriOfConceptToforget, tc);
-				}
-			}
-			else {
-				try(Transaction tc = session.beginTransaction()) {
-					eliminateClass(iriOfConceptToforget, tc);
-				}
+				removeContradictionClass(iriOfConceptToforget, tc);
 			}
 		}
+		else {
+			try(Transaction tc = session.beginTransaction()) {
+				eliminateClass(iriOfConceptToforget, tc);
+			}
+		}		
 	}
 	
 	//Remove Tbox Axiom of form SubClassOf(A, A) 
 	private void removeMeaningless(String classIRI, Transaction tc) {
-		Neo4jUpdate.deleteRelation(classIRI, classIRI, "SubOf", tc);
+		String statement = "MATCH (n:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI + ":{iri}}) "
+				+ "-[r:SubOf]->(n) DELETE r";
+		tc.run(statement, Values.parameters("iri", classIRI));
+		tc.success();
 	}
 	
 	//Check if the given class A has axiom of form Disjoint(A, A)
 	private boolean isContradictionClass(String classIRI, Session session) {
-		String neg_thing = "neg_" + THING_IRI;
-		String execString = "MATCH (a {" + NODE_KEY.NODE_IRI + ":{iri}})-[:SubOf]->(b {" + NODE_KEY.NODE_IRI + ":{neg_iri}}) RETURN a";
+		String execString = "MATCH (a:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI 
+					+ ":{iri}})-[:SubOf]->(b:" + NODE_LABEL.NEGATION + " {" + NODE_KEY.POSITIVE_NODE_IRI 
+					+ ":{thing_iri}}) RETURN a";
 		
 		try(Transaction tc = session.beginTransaction()) {
-			StatementResult result = tc.run(execString, Values.parameters("iri", classIRI, "neg_iri", neg_thing));
+			StatementResult result = tc.run(execString, Values.parameters("iri", classIRI, "thing_iri", THING_IRI));
 			if(result.hasNext()) return true;
 		}
 		return false;
@@ -118,47 +138,43 @@ public class Forgetting {
 	
 	//Remove the contradiction class and make its subclasses contradiction class
 	private void removeContradictionClass(String classIRI, Transaction tc) {
-		String neg_thing = "\"neg_" + THING_IRI + "\"";
-		String exec = "MATCH (a)-[:SubOf]->(b {" + NODE_KEY.NODE_IRI + ":{biri}}) "
-				  	  + "DETACH DELETE b "
-					  + "WITH a "
-					  + "MATCH (nthing {" + NODE_KEY.NODE_IRI + ":" + neg_thing + "}) "
-//				      + "MERGE (na {" + NODE_KEY.POSITIVE_NODE_IRI + ":a." + NODE_KEY.NODE_IRI + "}) ON CREATE SET na:{negation} "
-//				      + "na." + NODE_KEY.NODE_IRI + " = {neg} + a." + NODE_KEY.NODE_IRI + ", na." + NODE_KEY.POSITIVE_NODE_IRI + " = a." 
-//				      + NODE_KEY.NODE_IRI + 
-//				      ", na." + NODE_KEY.NODE_DESCRIBTION + " = a." + NODE_KEY.NODE_DESCRIBTION +
-//				      ", na." + NODE_KEY.NODE_TYPE + " = a." + NODE_KEY.NODE_TYPE + " "
+		String exec = "MATCH (a:" + NODE_LABEL.TBOXENTITY + ")-[:SubOf]->(b:" + NODE_LABEL.TBOXENTITY 
+					  + " {" + NODE_KEY.NODE_IRI + ":{biri}}) "
+					  + "REMOVE b:" + NODE_LABEL.TBOXENTITY + " SET b:" + NODE_LABEL.DISCARD
+//				  	  + "DETACH DELETE b "
+					  + " WITH a "
+					  + "MATCH (nthing:" + NODE_LABEL.NEGATION 
+					  + " {" + NODE_KEY.POSITIVE_NODE_IRI + ":{thing_iri}}) "
 					  + "CREATE (a)-[:SubOf]->(nthing)";
 
-		tc.run(exec, Values.parameters("biri", classIRI, "negation", NODE_LABEL.NEGATION, 
-				 "neg", GraphNode.NEG_PREFIX));
+		tc.run(exec, Values.parameters("biri", classIRI, "thing_iri", THING_IRI));
 		tc.success();
 	}
 	
 	//Given class A to forget, change all B -> ~A to A -> ~B
 	private void changeNegationDirection(String classIRI, Transaction tc) {
-		String neg_iri = GraphNode.NEG_PREFIX + classIRI;
-		String execString = "MATCH (a)-[r:SubOf]->(nb {" + NODE_KEY.NODE_IRI + ":{neg_iri}}) DETACH DELETE nb " +
-						   "MERGE (na {" + NODE_KEY.POSITIVE_NODE_IRI + ":a." + NODE_KEY.NODE_IRI + "}) "
-						   	+ "ON CREATE SET na:" + NODE_LABEL.NEGATION + ", na." + NODE_KEY.NODE_IRI + " = {neg} + a." + NODE_KEY.NODE_IRI + 
-						   	", na." + NODE_KEY.POSITIVE_NODE_IRI + " = a." + NODE_KEY.NODE_IRI + 
+		String execString = "MATCH (a:" + NODE_LABEL.TBOXENTITY + ")-[r:SubOf]->(nb:" + NODE_LABEL.NEGATION 
+							+ " {" + NODE_KEY.POSITIVE_NODE_IRI + ":{iri}}) " + "DETACH DELETE nb " +
+						   "MERGE (na:" + NODE_LABEL.NEGATION + " {" + NODE_KEY.POSITIVE_NODE_IRI + ":a." + NODE_KEY.NODE_IRI + "}) "
+						   	+ "ON CREATE SET na." + NODE_KEY.NODE_IRI + " = {neg} + a." + NODE_KEY.NODE_IRI + 
 						   	", na." + NODE_KEY.NODE_DESCRIBTION + " = a." + NODE_KEY.NODE_DESCRIBTION +
-						   	", na." + NODE_KEY.NODE_TYPE + " = a." + NODE_KEY.NODE_TYPE + " " +
-						   "WITH na " +
-						   "MATCH (b {" + NODE_KEY.NODE_IRI + ":{b_iri}}) " +
+						   " WITH na " +
+						   "MATCH (b:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI + ":{iri}}) " +
 						   "CREATE (b)-[:SubOf]->(na)";
-		tc.run(execString, Values.parameters("neg_iri", neg_iri,
-				 "neg", GraphNode.NEG_PREFIX, "b_iri", classIRI));
+		tc.run(execString, Values.parameters("iri", classIRI,
+				 "neg", GraphNode.NEG_PREFIX));
 		tc.success();
 	}
 	
 	//Build relations go through class A and remove class A
 	private void eliminateClass(String classIRI, Transaction tc) {
-		String exeString = "MATCH (a)-[r:SubOf|is]->(remove {" + NODE_KEY.NODE_IRI + ":{iri}})-[:SubOf]->(b) "
-				   		+ "FOREACH(ignore in CASE type(r) WHEN \"SubOf\" THEN [1] ELSE [] END | MERGE (a)-[:SubOf]->(b)) "
-				        + "FOREACH(ignore in CASE type(r) WHEN \"is\" THEN [1] ELSE [] END | MERGE (a)-[:is]->(b))"
+		String exeString = "MATCH (a)-[r:SubOf|is]->(remove:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI
+						+ ":{iri}})-[:SubOf]->(b:" + NODE_LABEL.TBOXENTITY + ")"
+						+ " WHERE NOT a:" + NODE_LABEL.DISCARD
+				   		+ " FOREACH(ignore in CASE type(r) WHEN \"SubOf\" THEN [1] ELSE [] END | MERGE (a)-[:SubOf]->(b))"
+				        + " FOREACH(ignore in CASE type(r) WHEN \"is\" THEN [1] ELSE [] END | MERGE (a)-[:is]->(b))"
 						//+ "CREATE (a)-[r]->(b) "
-						+ "DETACH DELETE remove";
+						+ " REMOVE remove:" + NODE_LABEL.TBOXENTITY + " SET remove:" + NODE_LABEL.DISCARD;
 		tc.run(exeString, Values.parameters("iri", classIRI));
 		tc.success();
 	}
