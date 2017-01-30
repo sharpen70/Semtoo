@@ -20,19 +20,21 @@ public class ICTolerant_Forgetting {
 		f = new Forgetting();
 	}
 	
-	public void forget(Collection<String> iris) {
-		f.neighborRelatedForget(iris);
+	public void forget(Collection<String> iris, boolean naive) {
+		if(naive) f.naiveForget(iris);
+		else f.neighborRelatedForget(iris);
 		icSemantic.consistentBase();
 	}
 	
 	public static void main(String[] args) {
 		final ExecutorService exec = Executors.newFixedThreadPool(1);
 		
+		
 		Callable<String> call = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
 				ICTolerant_Forgetting icf = new ICTolerant_Forgetting(new IAR());
-				icf.forget(GraphAnalyzer.getRandomGroupConcepts(30));
+				icf.forget(GraphAnalyzer.getRandomGroupConcepts(30), false);
 				
 				return "Forget successfully";
 			}

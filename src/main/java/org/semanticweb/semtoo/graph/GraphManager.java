@@ -249,6 +249,14 @@ public class GraphManager {
 		session.close();
 	}
 	
+	public void clearGraph() {
+		try(Session session = neo4jmanager.getSession()) {
+			try(Transaction tc = session.beginTransaction()) {
+					Neo4jUpdate.clearGraph(tc);
+			}
+		}
+	}
+	
 	private OWLClassExpression fromMapToExpression(Map<String, Object> record, OWLDataFactory df) {
 		String iri = record.get("iri").toString();
 		String type = record.get("type").toString();

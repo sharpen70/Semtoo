@@ -23,12 +23,15 @@ public class Forgetting {
 		manager = Neo4jManager.getManager();
 	}
 	
-	public void restoreDiscard() {
+	public void restore() {
 		try(Session session = manager.getSession()) {
 			try(Transaction tc = session.beginTransaction()) {
-				String statement = "MATCH (n:" + NODE_LABEL.DISCARD + ")"
-						+ " REMOVE n:" + NODE_LABEL.DISCARD 
-						+ " SET n:" + NODE_LABEL.TBOXENTITY;
+				String statement = "MATCH (n:" + NODE_LABEL.FORGET + ")"
+						+ " REMOVE n:" + NODE_LABEL.FORGET 
+						+ " SET n:" + NODE_LABEL.TBOXENTITY
+						+ " MATCH [r:tSubOf|tis] DELETE r "
+						+ " MATCH [r:rSubOf] SET r:SubOf "
+						+ " MATCH [r:ris] SET r:is";
 				tc.run(statement);
 				tc.success();
 			}
@@ -65,25 +68,25 @@ public class Forgetting {
 			}
 			
 			try(Transaction tc = session.beginTransaction()) {
-				String statement = "MATCH (a) " +
+				String statement = "MATCH (a:" + NODE_LABEL.TBOXENTITY + ") " +
 								   "WHERE a." + NODE_KEY.NODE_IRI + " IN {iris} " +
-								   "SET a.forget = true";
+								   "SET a:" + NODE_LABEL.FORGET;
 				tc.run(statement, Values.parameters("iris", concepts));
 				tc.success();
 			}
 			try(Transaction tc = session.beginTransaction()) {
 				String statement = "MATCH " +
-								   "(a)-[r:SubOf|is]->(f1), " +
-								   "(f2)-[:SubOf]->(b) " +
-								   "WHERE NOT exists(a.forget) AND NOT exists(b.forget) " +
-								   "AND exists(f1.forget) AND exists(f2.forget) AND " + 
-								   "(a)-[*2..]->(b) " +
-//								   "CREATE (a)-[r]->(b)";
-								   "FOREACH(ignore in CASE type(r) WHEN \"SubOf\" THEN [1] ELSE [] END | MERGE (a)-[:SubOf]->(b)) " +
-								   "FOREACH(ignore in CASE type(r) WHEN \"is\" THEN [1] ELSE [] END | MERGE (a)-[:is]->(b))";
+								   "(a)-[r1:SubOf|is]->(f1:" + NODE_LABEL.FORGET + "), " +
+								   "(f2:" + NODE_LABEL.FORGET + ")-[r2:SubOf]->(b) " +
+								   "WHERE NOT a:" + NODE_LABEL.FORGET + " AND NOT b:" + NODE_LABEL.FORGET +
+								   " AND (a)-[*2..]->(b) " +
+								   "FOREACH(ignore in CASE type(r) WHEN \"SubOf\" THEN [1] ELSE [] END | SET r1:rSubOf MERGE (a)-[r:SubOf]->(b)) ON CREATE SET r:tSubOf" +
+								   "FOREACH(ignore in CASE type(r) WHEN \"is\" THEN [1] ELSE [] END | SET r1:ris MERGE (a)-[r:is]->(b)) ON CREATE SET r:tis"
+								   + " SET r2:rSubOf";
 				
 				tc.run(statement);
-				tc.run("MATCH (delete) WHERE exists(delete.forget) DETACH DELETE delete");
+//				tc.run("MATCH (delete:" + NODE_LABEL.FORGET + ") DETACH DELETE delete");
+				tc.run("MATCH (del:" + NODE_LABEL.FORGET + ") REMOVE del:" + NODE_LABEL.TBOXENTITY);
 				tc.success();
 			}
 		}
@@ -140,12 +143,14 @@ public class Forgetting {
 	private void removeContradictionClass(String classIRI, Transaction tc) {
 		String exec = "MATCH (a:" + NODE_LABEL.TBOXENTITY + ")-[:SubOf]->(b:" + NODE_LABEL.TBOXENTITY 
 					  + " {" + NODE_KEY.NODE_IRI + ":{biri}}) "
-					  + "REMOVE b:" + NODE_LABEL.TBOXENTITY + " SET b:" + NODE_LABEL.DISCARD
+					  + "REMOVE b:" + NODE_LABEL.TBOXENTITY + " SET b:" + NODE_LABEL.FORGET
 //				  	  + "DETACH DELETE b "
-					  + " WITH a "
+					  + " WITH a, b"
+					  + "MATCH (b)-[r:SubOf]-(ignoreme) "
+					  + "SET r:rSubOf "
 					  + "MATCH (nthing:" + NODE_LABEL.NEGATION 
 					  + " {" + NODE_KEY.POSITIVE_NODE_IRI + ":{thing_iri}}) "
-					  + "CREATE (a)-[:SubOf]->(nthing)";
+					  + "CREATE (a)-[:tSubOf]->(nthing)";
 
 		tc.run(exec, Values.parameters("biri", classIRI, "thing_iri", THING_IRI));
 		tc.success();
@@ -168,13 +173,17 @@ public class Forgetting {
 	
 	//Build relations go through class A and remove class A
 	private void eliminateClass(String classIRI, Transaction tc) {
-		String exeString = "MATCH (a)-[r:SubOf|is]->(remove:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI
-						+ ":{iri}})-[:SubOf]->(b:" + NODE_LABEL.TBOXENTITY + ")"
-						+ " WHERE NOT a:" + NODE_LABEL.DISCARD
-				   		+ " FOREACH(ignore in CASE type(r) WHEN \"SubOf\" THEN [1] ELSE [] END | MERGE (a)-[:SubOf]->(b))"
-				        + " FOREACH(ignore in CASE type(r) WHEN \"is\" THEN [1] ELSE [] END | MERGE (a)-[:is]->(b))"
-						//+ "CREATE (a)-[r]->(b) "
-						+ " REMOVE remove:" + NODE_LABEL.TBOXENTITY + " SET remove:" + NODE_LABEL.DISCARD;
+		String exeString = "MATCH (a)-[r1:SubOf|is|tSubOf|tis]->(mv:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI
+						+ ":{iri}})-[r2:SubOf|tSubOf]->(b:" + NODE_LABEL.TBOXENTITY + ")"
+						+ " WHERE NOT a:" + NODE_LABEL.FORGET
+				   		+ " FOREACH(ignore in CASE type(r1) WHEN \"SubOf\" THEN [1] ELSE [] END | SET r1:rSubOf MERGE (a)-[r:SubOf]->(b)) ON CREATE SET r:tSubOf"
+				        + " FOREACH(ignore in CASE type(r1) WHEN \"is\" THEN [1] ELSE [] END | SET r1:ris MERGE (a)-[r:is]->(b)) ON CREATE SET r:tis"
+				        + " FOREACH(ignore in CASE type(r1) WHEN \"tSubOf\" THEN [1] ELSE [] END | DELETE r1 MERGE (a)-[r:SubOf]->(b)) ON CREATE SET r:tSubOf"
+				        + " FOREACH(ignore in CASE type(r1) WHEN \"tis\" THEN [1] ELSE [] END | DELETE r1 MERGE (a)-[r:is]->(b)) ON CREATE SET r:tis"
+				        + " FOREACH(ignore in CASE type(r2) WHEN \"SubOf\" THEN [1] ELSE [] END | SET r2:rSubOf"
+				        + " FOREACH(ignore in CASE type(r2) WHEN \"tSubOf\" THEN [1] ELSE [] END | DELETE r2"
+						+ " REMOVE mv:" + NODE_LABEL.TBOXENTITY + " SET mv:" + NODE_LABEL.FORGET;
+//				        + " DETACH DELETE remove";
 		tc.run(exeString, Values.parameters("iri", classIRI));
 		tc.success();
 	}

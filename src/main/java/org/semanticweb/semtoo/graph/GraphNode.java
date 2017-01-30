@@ -37,6 +37,7 @@ public class GraphNode {
 		public static final String DISCARD = "DISC";
 		public static final String PROPERTY = "PP";
 		public static final String CLASS = "CLS";
+		public static final String FORGET = "F";
 	}
 	
 	public static class NODE_KEY {
