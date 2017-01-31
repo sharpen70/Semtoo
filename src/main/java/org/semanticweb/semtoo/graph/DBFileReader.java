@@ -35,8 +35,7 @@ public class DBFileReader {
 		
 		int read_count = 0;
 		int rc = 0;
-		int insert_count = 0;
-		int ic = 0;
+		int tc_count = 0;
 		
 		long start = System.currentTimeMillis();
 		
@@ -44,8 +43,8 @@ public class DBFileReader {
 			try(Transaction tc = session.beginTransaction()) {	
 				tc.run("CREATE INDEX ON :" + NODE_LABEL.INDIVIDUAL + "(" + NODE_KEY.NODE_IRI + ")");
 				tc.run("CREATE INDEX ON :" + NODE_LABEL.DUALINDIVIDUAL + "(" + NODE_KEY.NODE_IRI + ")");
-				tc.run("CREATE INDEX ON :" + NODE_LABEL.DUALINDIVIDUAL + "(" + NODE_KEY.SUBJECT_IRI + ")");
-				tc.run("CREATE INDEX ON :" + NODE_LABEL.DUALINDIVIDUAL + "(" + NODE_KEY.OBJECT_IRI + ")");
+//				tc.run("CREATE INDEX ON :" + NODE_LABEL.DUALINDIVIDUAL + "(" + NODE_KEY.SUBJECT_IRI + ")");
+//				tc.run("CREATE INDEX ON :" + NODE_LABEL.DUALINDIVIDUAL + "(" + NODE_KEY.OBJECT_IRI + ")");
 				tc.success();
 			}
 			
@@ -82,25 +81,34 @@ public class DBFileReader {
 									String inv_prt_iri = GraphNode.PRT_PREFIX + GraphNode.INV_PREFIX + predicate_iri;
 									
 									String statement = 
-											"MERGE (a:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{term1}})"
-											+ " MERGE (b:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{term2}})"
+//											"MERGE (a:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{term1}})"
+//											+ " MERGE (b:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{term2}})"
+//											+ " MERGE (ab:" + NODE_LABEL.DUALINDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{ab_iri}})"
+//											+ " ON CREATE SET ab." + NODE_KEY.SUBJECT_IRI + "={term1}, ab." + NODE_KEY.OBJECT_IRI + "={term2}"
+//											+ " MERGE (ba:" + NODE_LABEL.DUALINDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{ba_iri}})"
+//											+ " ON CREATE SET ba." + NODE_KEY.SUBJECT_IRI + "={term2}, ba." + NODE_KEY.OBJECT_IRI + "={term1}"
+//											+ " WITH a, b, ab, ba"
+//											+ " MATCH (p:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{p_iri}}),"
+//											+ " (ip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{inv_p_iri}}),"
+//											+ " (rp:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{prt_iri}}),"
+//											+ " (rip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{inv_prt_iri}})"
+//											+ " CREATE (ab)-[:is]->(p), (ba)-[:is]->(ip)"
+//											+ " MERGE (a)-[:is]->(rp) MERGE (b)-[:is]->(rip)";
+											"MERGE (a:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{term1}}) WITH a"
+											+ " MATCH (rp:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{prt_iri}})"
+											+ " MERGE (a)-[:is]->(rp)"
+											+ " MERGE (b:" + NODE_LABEL.INDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{term2}}) WITH b"
+											+ " MATCH (rip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{inv_prt_iri}})"
+											+ " MERGE (b)-[:is]->(rip)"
 											+ " MERGE (ab:" + NODE_LABEL.DUALINDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{ab_iri}})"
-//											+ " USING INDEX ab:" + NODE_LABEL.DUALINDIVIDUAL + "(" + NODE_KEY.NODE_IRI + ")"
-											+ " ON CREATE SET ab." + NODE_KEY.SUBJECT_IRI + "={term1}, ab." + NODE_KEY.OBJECT_IRI + "={term2}"
+											+ " ON CREATE SET ab." + NODE_KEY.SUBJECT_IRI + "={term1}, ab." + NODE_KEY.OBJECT_IRI + "={term2} WITH ab"
+											+ " MATCH (p:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{p_iri}})"
+											+ " CREATE (ab)-[:is]->(p)"
 											+ " MERGE (ba:" + NODE_LABEL.DUALINDIVIDUAL + " {" + NODE_KEY.NODE_IRI + ":{ba_iri}})"
-//											+ " USING INDEX ba:" + NODE_LABEL.DUALINDIVIDUAL + "(" + NODE_KEY.NODE_IRI + ")"
-											+ " ON CREATE SET ba." + NODE_KEY.SUBJECT_IRI + "={term2}, ba." + NODE_KEY.OBJECT_IRI + "={term1}"
-											+ " WITH a, b, ab, ba"
-											+ " MATCH (p:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{p_iri}}),"
-											+ " (ip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{inv_p_iri}}),"
-											+ " (rp:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{prt_iri}}),"
-											+ " (rip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{inv_prt_iri}})"
-//											+ " USING INDEX p:" + NODE_LABEL.TBOXENTITY + "(" + NODE_KEY.IRI_LOWER + ")"
-//											+ " USING INDEX ip:" + NODE_LABEL.TBOXENTITY + "(" + NODE_KEY.IRI_LOWER + ")"
-//											+ " USING INDEX rp:" + NODE_LABEL.TBOXENTITY + "(" + NODE_KEY.IRI_LOWER + ")"
-//											+ " USING INDEX rip:" + NODE_LABEL.TBOXENTITY + "(" + NODE_KEY.IRI_LOWER + ")"
-											+ " CREATE (ab)-[:is]->(p), (ba)-[:is]->(ip)"
-											+ " MERGE (a)-[:is]->(rp) MERGE (b)-[:is]->(rip)";
+											+ " ON CREATE SET ba." + NODE_KEY.SUBJECT_IRI + "={term2}, ba." + NODE_KEY.OBJECT_IRI + "={term1} WITH ba"
+											+ " MATCH (ip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{inv_p_iri}})"
+											+ " CREATE (ba)-[:is]->(ip)";
+											
 									tc.run(statement, Values.parameters("term1", term1, "term2", term2, "ab_iri", ab_iri, "ba_iri", ba_iri, 
 											"p_iri", predicate_iri, "inv_p_iri", inv_predicate_iri, "prt_iri", prt_iri, "inv_prt_iri", inv_prt_iri));
 									tc.success();
@@ -114,11 +122,11 @@ public class DBFileReader {
 									tc.success();
 								}
 								rc++;
-								ic++;
+								read_count++;
+								tc_count++;
 							}
 							
 							if(rc >= 1000) {
-								read_count += rc;
 								rc = 0;
 								long end = System.currentTimeMillis();
 								System.out.println("Done reading of " + read_count + " assertion records with " + (end - start) + " ms");
@@ -126,7 +134,8 @@ public class DBFileReader {
 							data = scanner.nextLine();
 						}
 					}
-				}			
+				}
+				tc.close();
 			}
 		}
 		scanner.close();

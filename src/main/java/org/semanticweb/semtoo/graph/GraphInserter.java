@@ -35,6 +35,7 @@ public class GraphInserter {
 				+ " (rip:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.IRI_LOWER + ":{inv_prt_iri}})"
 				+ " CREATE (ab)-[:is]->(p), (ba)-[:is]->(ip)"
 				+ " MERGE (a)-[:is]->(rp) MERGE (b)-[:is]->(rip)";
+		System.out.println(statement);
 		tc.run(statement, Values.parameters("term1", term1, "term2", term2, "ab_iri", ab_iri, "ba_iri", ba_iri, 
 				"p_iri", property_iri, "inv_p_iri", inv_predicate_iri, "prt_iri", prt_iri, "inv_prt_iri", inv_prt_iri));
 		tc.success();

@@ -21,6 +21,7 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.semtoo.Forgetting;
 import org.semanticweb.semtoo.graph.DBFileReader;
+import org.semanticweb.semtoo.graph.GraphInserter;
 import org.semanticweb.semtoo.graph.GraphManager;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 import org.semanticweb.semtoo.neo4j.Neo4jUpdate;
@@ -44,6 +45,11 @@ public class LoadOntology {
 //		File lubm_data = new File("C:/Users/s5051530/Downloads/SaQAI/SaQAI_latest/Databases/u5p2e-1.sql");
 //		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File("./resources/pizza.owl"));			
 		
+//		try(Session session = Neo4jManager.getManager().getSession()) {
+//			try(Transaction tc = session.beginTransaction()) {
+//				GraphInserter.addPropertyAssertion("a", "b", "c", tc);
+//			}
+//		}
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(lubm);	
 		
 		GraphManager gm = new GraphManager();
