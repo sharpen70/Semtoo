@@ -27,36 +27,33 @@ import org.semanticweb.semtoo.neo4j.Neo4jUpdate;
 
 
 public class LoadOntology {
-	public static final String prefix = "http://swat.cse.lehigh.edu/onto/univ-bench.owl#";
+	public static final String default_prefix = "http://swat.cse.lehigh.edu/onto/univ-bench.owl#";
 	public static final String databases = "C:/Users/s5051530/Downloads/SaQAI/SaQAI_latest/Databases";
 	
 	public static void main(String[] args) throws Exception {
+//		if(args.length < 2) throw new Exception("Need at least two variables, the first OWLOnotlogy file, the second Abox DB file.");
+		
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		
 		File lubm = new File("./resources/LUBM_DLlite.owl");
 		File lubm_data = new File("./resources/u1p0.sql");
+
+//		File lubm = new File(args[0]);
+//		File lubm_data = new File(args[1]);
+
 //		File lubm_data = new File("C:/Users/s5051530/Downloads/SaQAI/SaQAI_latest/Databases/u5p2e-1.sql");
-		//	OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File("./resources/pizza.owl"));			
+//		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File("./resources/pizza.owl"));			
 		
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(lubm);	
 		
-		Neo4jManager m = Neo4jManager.getManager();
-	
-		try(Session session = m.getSession()) {
-			try(Transaction tc = session.beginTransaction()) {
-					Neo4jUpdate.clearGraph(tc);
-			}
-		}
-	
 		GraphManager gm = new GraphManager();
+		gm.clearGraph();
 		gm.loadOntologyToGraph(ontology);
+		
 		DBFileReader reader = new DBFileReader();
-		reader.addPrefix(prefix);
+		reader.addPrefix(default_prefix);
 		reader.readDBFileToGraph(lubm_data);
 		
-//		String conceptIRI = "http://www.co-ode.org/ontologies/pizza/pizza.owl#FourSeasons";
-//		Forgetting f = new Forgetting(m);
-//		f.forget(conceptIRI);
 		gm.close();
 	}
 

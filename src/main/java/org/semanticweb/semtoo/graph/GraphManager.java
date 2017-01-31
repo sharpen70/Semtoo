@@ -1,8 +1,7 @@
 package org.semanticweb.semtoo.graph;
 
+import java.io.File;
 import java.util.Map;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
@@ -21,7 +20,6 @@ import org.semanticweb.owlapi.model.OWLClassExpressionVisitorEx;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
 import org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLEntityVisitor;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLException;
@@ -250,6 +248,8 @@ public class GraphManager {
 	}
 	
 	public void clearGraph() {
+		File neo4jdata = new File("~/neo4j/data/databases/graph.db");
+		
 		try(Session session = neo4jmanager.getSession()) {
 			try(Transaction tc = session.beginTransaction()) {
 					Neo4jUpdate.clearGraph(tc);
