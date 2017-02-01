@@ -32,7 +32,7 @@ public class GraphNode {
 	public static class NODE_LABEL {
 		public static final String NEGATION = "NEG";
 		public static final String TBOXENTITY = "TBEN";
-		public static final String INDIVIDUAL = "INDIVIDUAL";
+		public static final String INDIVIDUAL = "IDV";
 		public static final String DUALINDIVIDUAL = "DUAL";
 		public static final String DISCARD = "DISC";
 		public static final String PROPERTY = "PP";

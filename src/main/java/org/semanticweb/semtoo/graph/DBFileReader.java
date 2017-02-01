@@ -48,7 +48,7 @@ public class DBFileReader {
 				tc.success();
 			}
 			
-			try(Transaction tc = session.beginTransaction()) {				
+			try(Transaction tc = session.beginTransaction()) {		
 				while(scanner.hasNextLine()) {
 					String line = scanner.nextLine();
 					if(line.contains("COPY")) {
@@ -135,7 +135,7 @@ public class DBFileReader {
 						}
 					}
 				}
-				tc.close();
+//				tc.close();
 			}
 		}
 		scanner.close();

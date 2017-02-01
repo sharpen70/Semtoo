@@ -42,7 +42,7 @@ public class LoadOntology {
 //		File lubm = new File(args[0]);
 //		File lubm_data = new File(args[1]);
 
-//		File lubm_data = new File("C:/Users/s5051530/Downloads/SaQAI/SaQAI_latest/Databases/u5p2e-1.sql");
+//		File lubm_data = new File("../IJCAI17/Databases/u5p2e-1.sql");
 //		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File("./resources/pizza.owl"));			
 		
 //		try(Session session = Neo4jManager.getManager().getSession()) {
