@@ -25,3 +25,6 @@ target/
 #Experiment results
 test/
 Benchmark/
+testDB/
+
+CSVStore/

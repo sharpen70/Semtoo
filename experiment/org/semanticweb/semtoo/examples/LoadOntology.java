@@ -20,11 +20,14 @@ import org.semanticweb.owlapi.model.OWLException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.semtoo.Forgetting;
+import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabase;
 import org.semanticweb.semtoo.graph.DBFileReader;
 import org.semanticweb.semtoo.graph.GraphInserter;
 import org.semanticweb.semtoo.graph.GraphManager;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 import org.semanticweb.semtoo.neo4j.Neo4jUpdate;
+import org.semanticweb.semtoo.preprocessing.DBTransfer;
+import org.semanticweb.semtoo.preprocessing.OWLTransfer;
 
 
 public class LoadOntology {
@@ -44,23 +47,22 @@ public class LoadOntology {
 
 //		File lubm_data = new File("../IJCAI17/Databases/u5p2e-1.sql");
 //		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File("./resources/pizza.owl"));			
-		
-//		try(Session session = Neo4jManager.getManager().getSession()) {
-//			try(Transaction tc = session.beginTransaction()) {
-//				GraphInserter.addPropertyAssertion("a", "b", "c", tc);
-//			}
-//		}
+
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(lubm);	
 		
-		GraphManager gm = new GraphManager();
-		gm.clearGraph();
-		gm.loadOntologyToGraph(ontology);
+		SemtooDatabase semtoodb = SemtooDatabase.getDatabase("./testDB", true);
+		OWLTransfer owltf = new OWLTransfer(semtoodb);
+		owltf.loadOntologyToGraph(ontology);
 		
-		DBFileReader reader = new DBFileReader();
-		reader.addPrefix(default_prefix);
-		reader.readDBFileToGraph(lubm_data);
-		
-		gm.close();
+		DBTransfer dbtf = new DBTransfer(semtoodb);
+		dbtf.loadDBfiletoGraphDB("./CSVStore/u1p0_cls.csv", "./CSVStore/u1p0_ppt.csv");
+//		GraphManager gm = new GraphManager();
+//		gm.clearGraph();
+//		gm.loadOntologyToGraph(ontology);
+//		
+//		DBFileReader reader = new DBFileReader();
+//		reader.addPrefix(default_prefix);
+//		reader.readDBFileToGraph(lubm_data);
 	}
 
 }

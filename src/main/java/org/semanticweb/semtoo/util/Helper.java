@@ -1,11 +1,19 @@
 package org.semanticweb.semtoo.util;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Helper {
+	public static void recusiveDelete(File f) {
+		if(f.isDirectory()) {
+			for(File cf : f.listFiles()) recusiveDelete(cf);
+		}
+		f.delete();
+	}
+	
 	public static List<String> getRegMatches(String str, String regex) {
 		List<String> matches = new ArrayList<>();
 		Pattern pattern = Pattern.compile(regex);
