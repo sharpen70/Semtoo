@@ -11,6 +11,8 @@ import java.util.stream.Stream;
 
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.Transaction;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
@@ -27,6 +29,7 @@ import org.semanticweb.semtoo.graph.GraphManager;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 import org.semanticweb.semtoo.neo4j.Neo4jUpdate;
 import org.semanticweb.semtoo.preprocessing.DBTransfer;
+import org.semanticweb.semtoo.preprocessing.DBTransfer_server;
 import org.semanticweb.semtoo.preprocessing.OWLTransfer;
 
 
@@ -54,11 +57,20 @@ public class LoadOntology {
 		OWLTransfer owltf = new OWLTransfer(semtoodb);
 		owltf.loadOntologyToGraph(ontology);
 		
-		DBTransfer dbtf = new DBTransfer(semtoodb);
+		GraphDatabaseService db = semtoodb.getEmbeddedDB();
+		db.shutdown();
+		
+		db = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(new File("./testDB")).loadPropertiesFromFile("../neo4j.conf").newGraphDatabase();
+		
+		DBTransfer dbtf = new DBTransfer(db);
 		dbtf.loadDBfiletoGraphDB("./CSVStore/u1p0_cls.csv", "./CSVStore/u1p0_ppt.csv");
+		
 //		GraphManager gm = new GraphManager();
 //		gm.clearGraph();
 //		gm.loadOntologyToGraph(ontology);
+//		
+//		DBTransfer_server dbtf_s = new DBTransfer_server();
+//		dbtf_s.loadDBfiletoGraphDB("./CSVStore/u1p0_cls.csv", "./CSVStore/u1p0_ppt.csv");
 //		
 //		DBFileReader reader = new DBFileReader();
 //		reader.addPrefix(default_prefix);

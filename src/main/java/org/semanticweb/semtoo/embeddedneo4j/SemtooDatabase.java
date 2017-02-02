@@ -28,8 +28,10 @@ public class SemtooDatabase {
 	
 	private SemtooDatabase(String pathtoDB) {
 		dbDir = pathtoDB;
-		graphdb = new GraphDatabaseFactory().newEmbeddedDatabase(new File(pathtoDB));
-		registerShutDownHook(graphdb);
+	//	graphdb = new GraphDatabaseFactory().newEmbeddedDatabase(new File(pathtoDB));
+		graphdb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(new File(pathtoDB))
+											.loadPropertiesFromFile("../neo4j.conf").newGraphDatabase();
+		//registerShutDownHook(graphdb);
 	}
 	
 	public static synchronized SemtooDatabase getDatabase(String pathtoDB, boolean clean) {
@@ -45,7 +47,7 @@ public class SemtooDatabase {
 		SemtooDatabase db = databases.get(pathtoDB);
 		if(db == null) {
 			db = new SemtooDatabase(pathtoDB);
-			db.initialize();
+			if(clean) db.initialize();
 			databases.put(pathtoDB, db);
 		}
 		return db;

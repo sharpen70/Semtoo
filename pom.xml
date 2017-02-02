@@ -16,7 +16,7 @@
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
-              <mainClass>org.semanticweb.semtoo.ICTolerant_Forgetting</mainClass>
+              <mainClass>org.semanticweb.semtoo.</mainClass>
             </manifest>
           </archive>
         </configuration>		
