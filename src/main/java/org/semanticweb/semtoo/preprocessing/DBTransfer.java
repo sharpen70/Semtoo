@@ -25,28 +25,28 @@ public class DBTransfer {
 	}
 	
 	public void loadDBfiletoGraphDB(String clsAssertioncsv, String pptAssertincsv) throws IOException {
-		clsAssertioncsv = new File(clsAssertioncsv).getCanonicalPath().replaceAll("\\\\", "/");
-		pptAssertincsv = new File(pptAssertincsv).getCanonicalPath().replaceAll("\\\\", "/");
+		clsAssertioncsv = new File(clsAssertioncsv).getCanonicalPath();
+		pptAssertincsv = new File(pptAssertincsv).getCanonicalPath();
 		
-		String cypher1 = "USING PERIODIC COMMIT 20000"
+		String cypher1 = "USING PERIODIC COMMIT 1000"
 				+ " LOAD CSV WITH HEADERS FROM \"file:///" + clsAssertioncsv + "\" AS clsa"
 				+ " MATCH (cls:" + node_labels.TBOXENTITY + " {" + property_key.IRI_LOWER + ":clsa.class})"
 				+ " MERGE (idv:" + node_labels.INDIVIDUAL + " {" + property_key.NODE_IRI + ":clsa.idv})"
 				+ " CREATE (idv)-[:is]->(cls)";
 		
-		String cypher2 = "USING PERIODIC COMMIT 20000"
+		String cypher2 = "USING PERIODIC COMMIT 1000"
 				+ " LOAD CSV WITH HEADERS FROM \"file:///" + pptAssertincsv + "\" AS ppta"
 				+ " MERGE (a:" + node_labels.INDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.subject})"
 				+ " MERGE (ab:" + node_labels.DUALINDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.subject + ppta.object})"
 				+ " ON CREATE SET ab." + property_key.SUBJECT_IRI + "=ppta.subject, ab." + property_key.OBJECT_IRI + "=ppta.object";
 		
-		String cypher2_1 = "USING PERIODIC COMMIT 20000"
+		String cypher2_1 = "USING PERIODIC COMMIT 1000"
 				+ " LOAD CSV WITH HEADERS FROM \"file:///" + pptAssertincsv + "\" AS ppta"
 				+ " MERGE (b:" + node_labels.INDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.object})"
 				+ " MERGE (ba:" + node_labels.DUALINDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.object + ppta.subject})"
 				+ " ON CREATE SET ba." + property_key.SUBJECT_IRI + "=ppta.object, ba." + property_key.OBJECT_IRI + "=ppta.subject";
 		
-		String cypher3 = "USING PERIODIC COMMIT 20000"
+		String cypher3 = "USING PERIODIC COMMIT 1000"
 				+ " LOAD CSV WITH HEADERS FROM \"file:///" + pptAssertincsv + "\" AS ppta"
 				+ " MATCH (p:" + node_labels.TBOXENTITY + " {" + property_key.IRI_LOWER + ": ppta.property})"
 				+ " MATCH (ip:" + node_labels.TBOXENTITY + " {" + property_key.IRI_LOWER + ":\"inv_\" + ppta.property})"
@@ -55,13 +55,13 @@ public class DBTransfer {
 				+ " CREATE (ab)-[:is]->(p)"
 				+ " CREATE (ba)-[:is]->(ip)";
 		
-		String cypher3_2 = "USING PERIODIC COMMIT 20000"
+		String cypher3_2 = "USING PERIODIC COMMIT 1000"
 				+ " LOAD CSV WITH HEADERS FROM \"file:///" + pptAssertincsv + "\" AS ppta"
 				+ " MATCH (rp:" + node_labels.TBOXENTITY + " {" + property_key.IRI_LOWER + ":\"prt_\" + ppta.property})"
 				+ " MATCH (a:" + node_labels.INDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.subject})"
 				+ " MERGE (a)-[:is]->(rp)";
 		
-		String cypher3_1 = "USING PERIODIC COMMIT 20000"
+		String cypher3_1 = "USING PERIODIC COMMIT 1000"
 				+ " LOAD CSV WITH HEADERS FROM \"file:///" + pptAssertincsv + "\" AS ppta"
 				+ " MATCH (rip:" + node_labels.TBOXENTITY + " {" + property_key.IRI_LOWER + ":\"prt_inv_\" + ppta.property})"
 				+ " MATCH (b:" + node_labels.INDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.object})"
@@ -91,16 +91,16 @@ public class DBTransfer {
 		System.out.println("Begin inserting property assertion with nodes ...");
 		start = System.currentTimeMillis();
 		
-		embeddedDB.execute(cypher2);
+	//	embeddedDB.execute(cypher2);
 		
 		end = System.currentTimeMillis();
 		System.out.println("Done creating nodes with " + (end - start) + " ms");
 		
-
+		
 		System.out.println("Begin inserting property assertion with relation ...");
 		start = System.currentTimeMillis();
 		
-		embeddedDB.execute(cypher2_1);
+	//	embeddedDB.execute(cypher2_1);
 		
 		end = System.currentTimeMillis();
 		System.out.println("Done creating relations with " + (end - start) + " ms");
@@ -108,7 +108,7 @@ public class DBTransfer {
 		System.out.println("Begin inserting property assertion with relation ...");
 		start = System.currentTimeMillis();
 		
-		embeddedDB.execute(cypher3);
+	//	embeddedDB.execute(cypher3);
 		
 		end = System.currentTimeMillis();
 		System.out.println("Done creating relations with " + (end - start) + " ms");
@@ -124,7 +124,7 @@ public class DBTransfer {
 		System.out.println("Begin inserting property assertion with relation ...");
 		start = System.currentTimeMillis();
 		
-		embeddedDB.execute(cypher3_2);
+	//	embeddedDB.execute(cypher3_2);
 		
 		end = System.currentTimeMillis();
 		System.out.println("Done creating relations with " + (end - start) + " ms");

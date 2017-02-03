@@ -159,14 +159,15 @@ public class OWLTransfer {
 		
 		try(Transaction tx = embeddedDB.beginTx()) {
 			o.signature().forEach(e -> e.accept(entityVisitor));			
-		
+			tx.success();
+		}
 		/////////////////////////////////////////////////////////////////////////
 		// This is a special modification of nodes for the database dump file, //
 		// turning every node name into lowercase                              //
 		/////////////////////////////////////////////////////////////////////////
 		
 		
-
+		try(Transaction tx = embeddedDB.beginTx()) {
 			ResourceIterator<Node> nodes = embeddedDB.findNodes(node_labels.TBOXENTITY);
 			while(nodes.hasNext()) {
 				Node node = nodes.next();

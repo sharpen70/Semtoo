@@ -69,7 +69,8 @@ public class CSVConverter {
 						long end = System.currentTimeMillis();
 						System.out.println("Done reading of " + read_count + " assertion records with " + (end - start) + " ms");
 					}
-					data = scanner.nextLine();
+					if(scanner.hasNextLine()) data = scanner.nextLine();
+					else break;
 				}
 			}
 		}
