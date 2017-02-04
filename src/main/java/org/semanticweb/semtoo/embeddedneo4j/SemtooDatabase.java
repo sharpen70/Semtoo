@@ -29,8 +29,8 @@ public class SemtooDatabase {
 	private SemtooDatabase(String pathtoDB) {
 	//	graphdb = new GraphDatabaseFactory().newEmbeddedDatabase(new File(pathtoDB));
 		graphdb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(new File(pathtoDB))
-											.setConfig(GraphDatabaseSettings.pagecache_memory, "512m").newGraphDatabase();
-		registerShutDownHook(graphdb);
+											.setConfig(GraphDatabaseSettings.pagecache_memory, "6g").newGraphDatabase();
+//		registerShutDownHook(graphdb);
 	}
 	
 	public static synchronized SemtooDatabase getDatabase(String pathtoDB, boolean clean) {
@@ -168,7 +168,7 @@ public class SemtooDatabase {
 //		try(Transaction tx = graphdb.beginTx()) {
 			Node node = graphdb.createNode(node_labels.TBOXENTITY, node_labels.CLASS);
 			node.setProperty(property_key.NODE_IRI, iri);
-			
+			node.setProperty(property_key.IRI_LOWER, iri.toLowerCase());
 //			tx.success();
 //		}
 	}
@@ -191,7 +191,9 @@ public class SemtooDatabase {
 //		try(Transaction tx = graphdb.beginTx()) {
 			Node node = graphdb.createNode(node_labels.TBOXENTITY, node_labels.PROPERTY);
 			if(inverse) {
-				node.setProperty(property_key.NODE_IRI, getInverseStringiri(iri));
+				String in_iri = getInverseStringiri(iri);
+				node.setProperty(property_key.NODE_IRI, in_iri);
+				node.setProperty(property_key.IRI_LOWER, in_iri.toLowerCase());
 				node.setProperty(property_key.PROPERTY_IRI, iri);
 			}
 			else node.setProperty(property_key.NODE_IRI, iri);
@@ -204,9 +206,11 @@ public class SemtooDatabase {
 			Node node = graphdb.createNode(node_labels.TBOXENTITY, node_labels.PROPERTY_CLASS);
 			
 			if(inverse) iri = getInverseStringiri(iri);
+			String pr_string = getPRStringiri(iri);
 			
-			node.setProperty(property_key.NODE_IRI, getPRStringiri(iri));
+			node.setProperty(property_key.NODE_IRI, pr_string);
 			node.setProperty(property_key.PROPERTY_IRI, iri);
+			node.setProperty(property_key.IRI_LOWER, pr_string.toLowerCase());
 			
 //			tx.success();
 //		}
@@ -237,141 +241,58 @@ public class SemtooDatabase {
 	}
 	
 	private void createNodeIndex() {
+		//This indexing is for CSV loading
 		try(Transaction tx = graphdb.beginTx()) {
-			Schema schema = graphdb.schema();
+			String index1 = "CREATE INDEX ON :IDV(iri)";
+			String index2 = "CREATE INDEX ON :DUAL(iri)";
+			String index3 = "CREATE INDEX ON :TBEN(iri)";
+			String index4 = "CREATE INDEX ON :TBEN(iri_lower)";
+			String index5 = "CREATE INDEX ON :NEG(iri)";
 			
-			schema.indexFor(node_labels.TBOXENTITY)
-							.on(property_key.NODE_IRI)
-							.create();
-			
-			schema.indexFor(node_labels.INDIVIDUAL)
-							.on(property_key.NODE_IRI)
-							.create();
-			
-			schema.indexFor(node_labels.DUALINDIVIDUAL)
-							.on(property_key.NODE_IRI)
-							.create();
-
-			schema.indexFor(node_labels.NEGATION)
-							.on(property_key.NODE_IRI)
-							.create();
-			
-			//Special case for DB dump file
-			schema.indexFor(node_labels.TBOXENTITY)
-							.on(property_key.IRI_LOWER)
-							.create();
-			
+			graphdb.execute(index1);
+			graphdb.execute(index2);
+			graphdb.execute(index3);
+			graphdb.execute(index4);
+			graphdb.execute(index5);
+	
 			tx.success();
 		}
 		
-		try(Transaction tx = graphdb.beginTx()) {
-			graphdb.schema().awaitIndexesOnline(10, TimeUnit.SECONDS);
-			tx.success();
-		}
+	//This approach for building index does work well for CSV loading
+		
+//		try(Transaction tx = graphdb.beginTx()) {
+//			Schema schema = graphdb.schema();
+//			
+//			schema.indexFor(node_labels.TBOXENTITY)
+//							.on(property_key.NODE_IRI)
+//							.create();
+//			
+//			schema.indexFor(node_labels.INDIVIDUAL)
+//							.on(property_key.NODE_IRI)
+//							.create();
+//			
+//			schema.indexFor(node_labels.DUALINDIVIDUAL)
+//							.on(property_key.NODE_IRI)
+//							.create();
+//
+//			schema.indexFor(node_labels.NEGATION)
+//							.on(property_key.NODE_IRI)
+//							.create();
+//			
+//			//Special case for DB dump file
+//			schema.indexFor(node_labels.TBOXENTITY)
+//							.on(property_key.IRI_LOWER)
+//							.create();
+//		}
+//		
+//		try(Transaction tx = graphdb.beginTx()) {
+//			graphdb.schema().awaitIndexesOnline(10, TimeUnit.SECONDS);
+//			tx.success();
+//		}
 	}
 	
-	public void loadDBfiletoGraphDB(String clsAssertioncsv, String pptAssertincsv) throws IOException {
-		clsAssertioncsv = new File(clsAssertioncsv).getCanonicalPath();
-		pptAssertincsv = new File(pptAssertincsv).getCanonicalPath();
-		
-	
-				
-		String cypher1 = "USING PERIODIC COMMIT 1000"
-				+ " LOAD CSV WITH HEADERS FROM \"file:///" + clsAssertioncsv + "\" AS clsa"
-				+ " MATCH (cls:" + node_labels.TBOXENTITY + " {" + property_key.IRI_LOWER + ":clsa.class})"
-				+ " MERGE (idv:" + node_labels.INDIVIDUAL + " {" + property_key.NODE_IRI + ":clsa.idv})"
-				+ " CREATE (idv)-[:is]->(cls)";
-		
-		String cypher2 = "USING PERIODIC COMMIT 1000"
-				+ " LOAD CSV WITH HEADERS FROM \"file:///" + pptAssertincsv + "\" AS ppta"
-				+ " MERGE (a:" + node_labels.INDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.subject})"
-				+ " MERGE (ab:" + node_labels.DUALINDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.subject + ppta.object})"
-				+ " ON CREATE SET ab." + property_key.SUBJECT_IRI + "=ppta.subject, ab." + property_key.OBJECT_IRI + "=ppta.object";
-		
-		String cypher2_1 = "USING PERIODIC COMMIT 1000"
-				+ " LOAD CSV WITH HEADERS FROM \"file:///" + pptAssertincsv + "\" AS ppta"
-				+ " MERGE (b:" + node_labels.INDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.object})"
-				+ " MERGE (ba:" + node_labels.DUALINDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.object + ppta.subject})"
-				+ " ON CREATE SET ba." + property_key.SUBJECT_IRI + "=ppta.object, ba." + property_key.OBJECT_IRI + "=ppta.subject";
-		
-		String cypher3 = "USING PERIODIC COMMIT 1000"
-				+ " LOAD CSV WITH HEADERS FROM \"file:///" + pptAssertincsv + "\" AS ppta"
-				+ " MATCH (p:" + node_labels.TBOXENTITY + " {" + property_key.IRI_LOWER + ": ppta.property})"
-				+ " MATCH (ip:" + node_labels.TBOXENTITY + " {" + property_key.IRI_LOWER + ":\"inv_\" + ppta.property})"
-				+ " MATCH (ab:" + node_labels.DUALINDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.subject + ppta.object})"
-				+ " MATCH (ba:" + node_labels.DUALINDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.object + ppta.subject})"
-				+ " CREATE (ab)-[:is]->(p)"
-				+ " CREATE (ba)-[:is]->(ip)";
-		
-		String cypher3_2 = "USING PERIODIC COMMIT 1000"
-				+ " LOAD CSV WITH HEADERS FROM \"file:///" + pptAssertincsv + "\" AS ppta"
-				+ " MATCH (rp:" + node_labels.TBOXENTITY + " {" + property_key.IRI_LOWER + ":\"prt_\" + ppta.property})"
-				+ " MATCH (a:" + node_labels.INDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.subject})"
-				+ " MERGE (a)-[:is]->(rp)";
-		
-		String cypher3_1 = "USING PERIODIC COMMIT 1000"
-				+ " LOAD CSV WITH HEADERS FROM \"file:///" + pptAssertincsv + "\" AS ppta"
-				+ " MATCH (rip:" + node_labels.TBOXENTITY + " {" + property_key.IRI_LOWER + ":\"prt_inv_\" + ppta.property})"
-				+ " MATCH (b:" + node_labels.INDIVIDUAL + " {" + property_key.NODE_IRI + ":ppta.object})"
-				+ " MERGE (b)-[:is]->(rip)";
-		
-		System.out.println(cypher1 + "\n");
-		System.out.println(cypher2 + "\n");
-		System.out.println(cypher2_1 + "\n");
-		System.out.println(cypher3 + "\n");
-		System.out.println(cypher3_1 + "\n");
-		System.out.println(cypher3_2 + "\n");
-		
-		long start, end;
-		System.out.println("Begin inserting class assertion ...");
-		start = System.currentTimeMillis();
-		
-		graphdb.execute(cypher1);
-		
-		end = System.currentTimeMillis();
-		System.out.println("Done class assertion with " + (end - start) + " ms");
-		
-			
-		System.out.println("Begin inserting property assertion with nodes ...");
-		start = System.currentTimeMillis();
-		
-		graphdb.execute(cypher2);
-		
-		end = System.currentTimeMillis();
-		System.out.println("Done creating nodes with " + (end - start) + " ms");
-		
-		
-		System.out.println("Begin inserting property assertion with relation ...");
-		start = System.currentTimeMillis();
-		
-		graphdb.execute(cypher2_1);
-		
-		end = System.currentTimeMillis();
-		System.out.println("Done creating relations with " + (end - start) + " ms");
-		
-		System.out.println("Begin inserting property assertion with relation ...");
-		start = System.currentTimeMillis();
-		
-		graphdb.execute(cypher3);
-		
-		end = System.currentTimeMillis();
-		System.out.println("Done creating relations with " + (end - start) + " ms");
-		
-		System.out.println("Begin inserting property assertion with relation ...");
-		start = System.currentTimeMillis();
-		
-		graphdb.execute(cypher3_1);
-		
-		end = System.currentTimeMillis();
-		System.out.println("Done creating relations with " + (end - start) + " ms");
-		
-		System.out.println("Begin inserting property assertion with relation ...");
-		start = System.currentTimeMillis();
-		
-		graphdb.execute(cypher3_2);
-		
-		end = System.currentTimeMillis();
-		System.out.println("Done creating relations with " + (end - start) + " ms");
+	public void shutdown() {
+		graphdb.shutdown();
 	}
 	
 	private static void registerShutDownHook(GraphDatabaseService graphdb) {

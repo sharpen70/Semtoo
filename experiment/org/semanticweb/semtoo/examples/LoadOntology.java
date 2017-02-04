@@ -35,8 +35,10 @@ import org.semanticweb.semtoo.preprocessing.OWLTransfer;
 
 
 public class LoadOntology {
-	public static final String default_prefix = "http://swat.cse.lehigh.edu/onto/univ-bench.owl#";
-	public static final String databases = "C:/Users/s5051530/Downloads/SaQAI/SaQAI_latest/Databases";
+	public static final String csv_store = "./CSVStore/";
+	public static final String[] testcases_small = {/*"u1p0", "u1p15e-4", "u1p5e-2", "u1p2e-1", "u5p0", "u5p15e-4",*/ "u5p5e-2", "u5p2e-1"};
+	public static final String[] testcases_big = {"u10p0", "u10p15e-4", "u10p5e-2", "u10p2e-1", "u20p0", "u20p15e-4", "u20p5e-2", "u20p2e-1"};
+	public static final String neo4j_datapath = "/home/sharpen/neo4j/data/databases/";
 	
 	public static void main(String[] args) throws Exception {
 //		if(args.length < 2) throw new Exception("Need at least two variables, the first OWLOnotlogy file, the second Abox DB file.");
@@ -54,12 +56,24 @@ public class LoadOntology {
 
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(lubm);	
 		
-		SemtooDatabase semtoodb = SemtooDatabase.getDatabase("/home/sharpen/neo4j/data/databases/testDB", true);
-		OWLTransfer owltf = new OWLTransfer(semtoodb);
-		owltf.loadOntologyToGraph(ontology);
+//		SemtooDatabase semtoodb = SemtooDatabase.getDatabase("/home/sharpen/neo4j/data/databases/u1p15e-4.db", true);
+//		
+//		OWLTransfer owltf = new OWLTransfer(ontology, semtoodb);
+//		owltf.createTboxEntitiesFromOWL();
+//		owltf.import_cvs("./CSVStore/u1p0_cls.csv", "./CSVStore/u1p0_ppt.csv");
+//		owltf.loadTboxAxiomsToGraph();
 		
-		semtoodb.loadDBfiletoGraphDB("./CSVStore/u1p0_cls.csv", "./CSVStore/u1p0_ppt.csv");
-		
+		for(String i : testcases_small) {
+			System.out.println("Loading Test case " + i);
+			SemtooDatabase semtoodb = SemtooDatabase.getDatabase(neo4j_datapath + i + ".db", true);
+			
+			OWLTransfer owltf = new OWLTransfer(ontology, semtoodb);
+			owltf.createTboxEntitiesFromOWL();
+			owltf.import_cvs(csv_store + i + "_cls.csv", csv_store + i + "_ppt.csv");
+			owltf.loadTboxAxiomsToGraph();
+			
+			semtoodb.shutdown();
+		}
 		
 //		GraphManager gm = new GraphManager();
 //		gm.clearGraph();
