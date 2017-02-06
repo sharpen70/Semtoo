@@ -24,6 +24,7 @@ target/
 
 #Experiment results
 test/
+result/
 Benchmark/
 testDB/
 Databases/

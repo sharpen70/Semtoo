@@ -27,8 +27,7 @@ public class GraphAnalyzer {
 		if(order == ORDER.ASC) desc = "";
 		else desc = "DESC";
 		
-		String exec = "MATCH (n:" + NODE_LABEL.TBOXENTITY + ")--(b) WHERE (b:" + NODE_LABEL.TBOXENTITY 
-				+ " OR b:" + NODE_LABEL.NEGATION + ") AND NOT n:" + NODE_LABEL.PROPERTY
+		String exec = "MATCH (n:" + NODE_LABEL.CLASS + ")--(b)" 
 				+ " RETURN n." + NODE_KEY.NODE_IRI + " AS IRI, count(*) AS Degrees "
 				+ "Order By Degrees " + desc 
 				+ " LIMIT " + limit;
@@ -53,7 +52,7 @@ public class GraphAnalyzer {
 		
 		String getClasses = "MATCH (n:" + NODE_LABEL.CLASS + ") RETURN n." + NODE_KEY.NODE_IRI + " AS IRIS";
 		String getGroup =  "MATCH (n:" + NODE_LABEL.TBOXENTITY + " {" + NODE_KEY.NODE_IRI + ":{target}})"
-				+ "-[:SubOf*0..5]-(g:" + NODE_LABEL.CLASS + ")"
+				+ "-[:SubOf*0..6]-(g:" + NODE_LABEL.CLASS + ")"
 						+ " RETURN DISTINCT g." + NODE_KEY.NODE_IRI + " AS TIRIS LIMIT " + limit;
 				
 		try(Session session = m.getSession()) {

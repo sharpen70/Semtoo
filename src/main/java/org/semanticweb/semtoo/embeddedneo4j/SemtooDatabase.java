@@ -196,7 +196,10 @@ public class SemtooDatabase {
 				node.setProperty(property_key.IRI_LOWER, in_iri.toLowerCase());
 				node.setProperty(property_key.PROPERTY_IRI, iri);
 			}
-			else node.setProperty(property_key.NODE_IRI, iri);
+			else {
+				node.setProperty(property_key.NODE_IRI, iri);
+				node.setProperty(property_key.IRI_LOWER, iri.toLowerCase());
+			}
 //			tx.success();
 //		}
 	}

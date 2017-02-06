@@ -36,9 +36,10 @@ import org.semanticweb.semtoo.preprocessing.OWLTransfer;
 
 public class LoadOntology {
 	public static final String csv_store = "./CSVStore/";
-	public static final String[] testcases_small = {/*"u1p0", "u1p15e-4", "u1p5e-2", "u1p2e-1", "u5p0", "u5p15e-4",*/ "u5p5e-2", "u5p2e-1"};
-	public static final String[] testcases_big = {"u10p0", "u10p15e-4", "u10p5e-2", "u10p2e-1", "u20p0", "u20p15e-4", "u20p5e-2", "u20p2e-1"};
+	public static final String[] testcases_small = {"u1p0", "u1p15e-4", "u1p5e-2", "u1p2e-1", "u5p0", "u5p15e-4", "u5p5e-2", "u5p2e-1"};
+	public static final String[] testcases_big = {/*"u10p0", "u10p15e-4",*/ "u10p5e-2", "u10p2e-1", "u20p15e-4", "u20p5e-2"};
 	public static final String neo4j_datapath = "/home/sharpen/neo4j/data/databases/";
+	public static final String new_datapath = "/home/sharpen/data/databases/";
 	
 	public static void main(String[] args) throws Exception {
 //		if(args.length < 2) throw new Exception("Need at least two variables, the first OWLOnotlogy file, the second Abox DB file.");

@@ -15,32 +15,32 @@ public class GenerateBenchmark {
 	public static final String leastDegree = "./Benchmark/forget_concepts/degree";
 	
 	public static void main(String[] args) throws FileNotFoundException {
-		File groupConcepts_dir = new File(groupConcepts);
-		if(!groupConcepts_dir.exists()) groupConcepts_dir.mkdirs();
-		
-		for(int i : LIMITS) {
-			Collection<String> concepts = GraphAnalyzer.getRandomGroupConcepts(i);
-			File record = new File(groupConcepts + "/group_" + i);
-			PrintWriter writer = new PrintWriter(record);
-			for(String concept : concepts) {
-				writer.println(concept);
-			}
-			writer.close();
-		}
-		
-		File randomConcepts_dir = new File(randomConcepts);
-		if(!randomConcepts_dir.exists()) randomConcepts_dir.mkdirs();
-		
-		for(int i : LIMITS) {
-			Collection<String> concepts = GraphAnalyzer.getRandomDiscreteConcepts(i);
-			File record = new File(randomConcepts + "/discrete_" + i);
-
-			PrintWriter writer = new PrintWriter(record);
-			for(String concept : concepts) {
-				writer.println(concept);
-			}
-			writer.close();
-		}
+//		File groupConcepts_dir = new File(groupConcepts);
+//		if(!groupConcepts_dir.exists()) groupConcepts_dir.mkdirs();
+//		
+//		for(int i : LIMITS) {
+//			Collection<String> concepts = GraphAnalyzer.getRandomGroupConcepts(i);
+//			File record = new File(groupConcepts + "/group_" + i);
+//			PrintWriter writer = new PrintWriter(record);
+//			for(String concept : concepts) {
+//				writer.println(concept);
+//			}
+//			writer.close();
+//		}
+//		
+//		File randomConcepts_dir = new File(randomConcepts);
+//		if(!randomConcepts_dir.exists()) randomConcepts_dir.mkdirs();
+//		
+//		for(int i : LIMITS) {
+//			Collection<String> concepts = GraphAnalyzer.getRandomDiscreteConcepts(i);
+//			File record = new File(randomConcepts + "/discrete_" + i);
+//
+//			PrintWriter writer = new PrintWriter(record);
+//			for(String concept : concepts) {
+//				writer.println(concept);
+//			}
+//			writer.close();
+//		}
 		
 		File leastDegreeConcepts_dir = new File(leastDegree);
 		if(!leastDegreeConcepts_dir.exists()) leastDegreeConcepts_dir.mkdirs();
