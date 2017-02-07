@@ -27,7 +27,7 @@ public class ForgettingPerformance {
 	
 	public static void main(String[] args) throws OWLOntologyCreationException, IOException {
 
-		singleTest("u1p0", concepts_path + "degree/degree_100");
+		singleTest("u5p2e-1", concepts_path + "degree/degree_100");
 	}
 	
 	public static void singleTest(String testowl, String testconcept) throws IOException {
@@ -52,10 +52,10 @@ public class ForgettingPerformance {
 		long end = System.currentTimeMillis();
 		System.out.println("Remove conflicts with " + (end - start) + " ms");
 		
-		start = System.currentTimeMillis();
-		forgetting.naiveForget(concepts);
-		end = System.currentTimeMillis();
-		System.out.println("Done with " + (end - start) + " ms");
+//		start = System.currentTimeMillis();
+//		forgetting.naiveForget(concepts);
+//		end = System.currentTimeMillis();
+//		System.out.println("Done with " + (end - start) + " ms");
 		
 		FileUtils.deleteDirectory(tmp_database);
 	}
