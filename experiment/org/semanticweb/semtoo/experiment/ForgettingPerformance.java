@@ -27,7 +27,7 @@ public class ForgettingPerformance {
 	
 	public static void main(String[] args) throws OWLOntologyCreationException, IOException {
 		GraphDatabaseService db = new GraphDatabaseFactory()
-				.newEmbeddedDatabaseBuilder(new File(data_path + "u1p2e-1.db"))
+				.newEmbeddedDatabaseBuilder(new File(data_path + "u5p2e-1.db"))
 				.setConfig(GraphDatabaseSettings.pagecache_memory, "4g")
 				.newGraphDatabase();
 		

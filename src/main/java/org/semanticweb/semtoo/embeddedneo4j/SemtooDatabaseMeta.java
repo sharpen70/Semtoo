@@ -23,6 +23,8 @@ public class SemtooDatabaseMeta {
 		public static final String SUBJECT_IRI = "subiri";
 		public static final String OBJECT_IRI = "objiri";
 		public static final String IRI_LOWER = "iri_lower";
+		public static final String SUBJECT_ID = "subid";
+		public static final String OBJECT_ID = "objid";
 	}
 	
 	public static enum RelType implements RelationshipType { SubOf, is }
