@@ -1,12 +1,28 @@
 package org.semanticweb.semtoo.embeddedneo4j;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.traversal.Evaluation;
+import org.neo4j.graphdb.traversal.Evaluator;
+import org.neo4j.graphdb.traversal.TraversalDescription;
+import org.neo4j.graphdb.traversal.Traverser;
+import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.RelType;
+import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.node_labels;
+import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.property_key;
 import org.semanticweb.semtoo.graph.GraphNode.NODE_KEY;
 import org.semanticweb.semtoo.graph.GraphNode.NODE_LABEL;
+import org.semanticweb.semtoo.util.Helper;
 
 public class IAR {
 	private GraphDatabaseService db;
@@ -14,6 +30,55 @@ public class IAR {
 	
 	public IAR(GraphDatabaseService _db) {
 		db = _db;
+	}
+	
+	private class LeafEvaluator implements Evaluator {
+		private Label leafLabel;
+		
+		public LeafEvaluator(Label label) {
+			leafLabel = label;
+		}
+		@Override
+		public Evaluation evaluate(Path path) {
+			boolean get = path.endNode().hasLabel(leafLabel);
+			return Evaluation.of(get, !get);
+		}
+	}
+	
+	public void traversal() {
+		Set<Long> re = new HashSet<>();
+		
+		try(Transaction tx = db.beginTx()) {
+			ResourceIterator<Node> nit = db.findNodes(node_labels.NEGATION);
+			
+			while(nit.hasNext()) {
+				Set<Long> lc1 = new HashSet<>();
+				Set<Long> lc2 = new HashSet<>();
+				
+				Node ng = nit.next();
+				Node pn = db.findNode(node_labels.TBOXENTITY, property_key.NODE_IRI, ng.getProperty(property_key.POSITIVE_NODE_IRI));
+				Traverser t1 = getLeaf(ng, node_labels.INDIVIDUAL);
+				Traverser t2 = getLeaf(pn, node_labels.INDIVIDUAL);
+				
+				for(Path p : t1) {
+					lc1.add(p.endNode().getId());
+				}
+				
+				for(Path p : t2) {
+					lc2.add(p.endNode().getId());
+				}
+				Helper.getIntersection(lc1, lc2, re);
+			}
+		}
+	}
+	
+	public Traverser getLeaf(final Node start, final Label leafLabel) {
+		TraversalDescription td = db.traversalDescription().depthFirst()
+				.relationships(RelType.SubOf, Direction.INCOMING)
+				.relationships(RelType.is, Direction.INCOMING)
+				.evaluator(new LeafEvaluator(leafLabel));
+		
+		return td.traverse(start);
 	}
 	
 	public void detectConflicts() {

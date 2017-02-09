@@ -26,8 +26,18 @@ public class ForgettingPerformance {
 	private static final String result = "./result/ic_f/";
 	
 	public static void main(String[] args) throws OWLOntologyCreationException, IOException {
-
-		singleTest("u5p2e-1", concepts_path + "degree/degree_100");
+		GraphDatabaseService db = new GraphDatabaseFactory()
+				.newEmbeddedDatabaseBuilder(new File(data_path + "u1p2e-1.db"))
+				.setConfig(GraphDatabaseSettings.pagecache_memory, "4g")
+				.newGraphDatabase();
+		
+		IAR iar = new IAR(db);
+		
+		long start = System.currentTimeMillis();
+		iar.traversal();
+		long end = System.currentTimeMillis();
+		System.out.println("Remove conflicts with " + (end - start) + " ms");
+//		singleTest("u5p2e-1", concepts_path + "degree/degree_100");
 	}
 	
 	public static void singleTest(String testowl, String testconcept) throws IOException {
@@ -48,7 +58,7 @@ public class ForgettingPerformance {
 		IAR iar = new IAR(db);
 		
 		long start = System.currentTimeMillis();
-		iar.detectConflicts();
+		iar.traversal();
 		long end = System.currentTimeMillis();
 		System.out.println("Remove conflicts with " + (end - start) + " ms");
 		
