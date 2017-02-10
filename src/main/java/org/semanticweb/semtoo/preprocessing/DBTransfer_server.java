@@ -5,8 +5,8 @@ import java.io.IOException;
 
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.Transaction;
-import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.node_labels;
-import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.property_key;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.node_labels;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.property_key;
 import org.semanticweb.semtoo.graph.GraphNode.NODE_KEY;
 import org.semanticweb.semtoo.graph.GraphNode.NODE_LABEL;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;

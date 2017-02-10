@@ -8,10 +8,10 @@ import java.util.Map;
 import org.neo4j.unsafe.batchinsert.BatchInserter;
 import org.neo4j.unsafe.batchinsert.BatchInserters;
 
-public class SemtooDatabaseInserter {
+public class StDatabaseInserter {
 	private BatchInserter inserter;
 	
-	public SemtooDatabaseInserter(String pathtoDB) throws IOException {
+	public StDatabaseInserter(String pathtoDB) throws IOException {
 		Map<String, String> config = new HashMap<>();
 		config.put("dbms.pagecache.memory", "512m");
 		inserter = BatchInserters.inserter(new File(pathtoDB).getAbsoluteFile());

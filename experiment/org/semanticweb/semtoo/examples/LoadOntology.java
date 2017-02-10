@@ -23,7 +23,7 @@ import org.semanticweb.owlapi.model.OWLException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.semtoo.Forgetting;
-import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabase;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabase;
 import org.semanticweb.semtoo.graph.DBFileReader;
 import org.semanticweb.semtoo.graph.GraphInserter;
 import org.semanticweb.semtoo.graph.GraphManager;
@@ -66,7 +66,7 @@ public class LoadOntology {
 		
 		for(String i : testcases_small) {
 			System.out.println("Loading Test case " + i);
-			SemtooDatabase semtoodb = SemtooDatabase.getDatabase(neo4j_datapath + i + ".db", true);
+			StDatabase semtoodb = StDatabase.getDatabase(neo4j_datapath + i + ".db", true);
 			
 			OWLTransfer owltf = new OWLTransfer(ontology, semtoodb);
 			owltf.createTboxEntitiesFromOWL();

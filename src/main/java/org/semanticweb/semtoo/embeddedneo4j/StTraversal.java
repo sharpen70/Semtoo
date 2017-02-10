@@ -15,28 +15,28 @@ import org.neo4j.graphdb.traversal.Evaluation;
 import org.neo4j.graphdb.traversal.Evaluator;
 import org.neo4j.graphdb.traversal.TraversalDescription;
 import org.neo4j.graphdb.traversal.Traverser;
-import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.RelType;
-import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.node_labels;
-import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.property_key;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.RelType;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.node_labels;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.property_key;
 
-public class SemtooTraversal {
+public class StTraversal {
 	private GraphDatabaseService db;
 	
-	public SemtooTraversal(GraphDatabaseService _db) {
+	public StTraversal(GraphDatabaseService _db) {
 		db = _db;
 	}
 	
-	private void retainCommon(Set<Long> tids, Set<Long> ids) {
-		Set<Long> loopset = tids;
-		Set<Long> checkset = ids;
+	private void hashjoin(HashSet<Long> left, HashSet<Long> right) {
+		Set<Long> loopset = left;
+		Set<Long> checkset = right;
 		
-		if(tids.size() > ids.size()) {
-			loopset = ids;
-			checkset = tids;
+		if(right.size() > right.size()) {
+			loopset = right;
+			checkset = left;
 		}
 		
 		for(Long id : loopset) {
-			if(!checkset.contains(id)) tids.remove(id);
+			if(!checkset.contains(id)) left.remove(id);
 		}
 	}
 	
@@ -57,9 +57,8 @@ public class SemtooTraversal {
 		return td;
 	}
 	
-	public void getConceptInstances(Node atom, Set<Long> restrict) {
-		Set<Long> instances = new HashSet<>();
-		
+	public void getConceptInstances(Node atom, HashSet<Long> restrict) {
+		HashSet<Long> instances = new HashSet<>();
 		TraversalDescription td = getTargetTraDes(node_labels.INDIVIDUAL);
 		Traverser traverser = td.traverse(atom);
 		
@@ -69,7 +68,7 @@ public class SemtooTraversal {
 			instances.add(endid);
 		}
 		
-		retainCommon(restrict, instances);
+		hashjoin(restrict, instances);
 	}
 	
 	public void getRoleInstances(Node atom, Set<Long> object_restrict, 
@@ -106,7 +105,7 @@ public class SemtooTraversal {
 			long endid = reverseNodes.next().getId();
 			long beforeEndid = reverseNodes.next().getId();
 			
-			Set<Long> assertionNodes = assertionss.get(endid);
+			Set<Long> assertionNodes = assertions.get(endid);
 			if(assertionNodes == null) {
 				Set<Long> _assertionNodes = new HashSet<>();
 				_assertionNodes.add(beforeEndid);

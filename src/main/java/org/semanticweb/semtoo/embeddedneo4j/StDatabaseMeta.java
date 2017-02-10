@@ -3,7 +3,7 @@ package org.semanticweb.semtoo.embeddedneo4j;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 
-public class SemtooDatabaseMeta {
+public class StDatabaseMeta {
 	public static class node_labels {
 		public static final Label TBOXENTITY = Label.label("TBEN");
 		public static final Label CLASS = Label.label("CLS");

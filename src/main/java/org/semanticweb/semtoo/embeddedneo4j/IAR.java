@@ -3,7 +3,6 @@ package org.semanticweb.semtoo.embeddedneo4j;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,7 +10,6 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -19,9 +17,9 @@ import org.neo4j.graphdb.traversal.Evaluation;
 import org.neo4j.graphdb.traversal.Evaluator;
 import org.neo4j.graphdb.traversal.TraversalDescription;
 import org.neo4j.graphdb.traversal.Traverser;
-import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.RelType;
-import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.node_labels;
-import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.property_key;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.RelType;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.node_labels;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.property_key;
 import org.semanticweb.semtoo.graph.GraphNode.NODE_KEY;
 import org.semanticweb.semtoo.graph.GraphNode.NODE_LABEL;
 import org.semanticweb.semtoo.util.Helper;
@@ -52,49 +50,49 @@ public class IAR {
 		return td.traverse(start);
 	}
 	
-	private Map<Long, Set<Long>> getSubsumedInstances(Node role, Map<Long, Set<Long>> object_restrict , 
-			Map<Long, Set<Long>> subject_restrict) {
-		Map<Long, Set<Long>> instances = new HashMap<>();
-		
-		TraversalDescription td = db.traversalDescription()
-				.relationships(RelType.SubOf, Direction.INCOMING)
-				.relationships(RelType.is, Direction.INCOMING)
-				.evaluator(new Evaluator() {
-					@Override
-					public Evaluation evaluate(Path path) {
-						Node end = path.endNode();
-						boolean get = end.hasLabel(node_labels.DUALINDIVIDUAL);
-						boolean includes = get;
-						
-						if(get && object_restrict != null) {
-							includes = object_restrict.containsKey(end.getId());
-						}
-						return Evaluation.of(includes, !get);
-					}
-				});
-		
-		Traverser traverser = td.traverse(role);
-		
-		for(Path p : traverser) {
-			Iterator<Node> reverseNodes = p.reverseNodes().iterator();
-			long endid = reverseNodes.next().getId();
-			long beforeEndid = reverseNodes.next().getId();
-			
-			Set<Long> assertionNodes = instances.get(endid);
-			if(assertionNodes == null) {
-				Set<Long> _assertionNodes = new HashSet<>();
-				_assertionNodes.add(beforeEndid);
-				instances.put(endid, _assertionNodes);
-			}
-			else assertionNodes.add(beforeEndid);
-		}
-		
-		for(Long key: instances.keySet()) {
-			instances.get(key).addAll(restrict.get(key));
-		}
-		
-		return instances;		
-	}
+//	private Map<Long, Set<Long>> getSubsumedInstances(Node role, Map<Long, Set<Long>> object_restrict , 
+//			Map<Long, Set<Long>> subject_restrict) {
+//		Map<Long, Set<Long>> instances = new HashMap<>();
+//		
+//		TraversalDescription td = db.traversalDescription()
+//				.relationships(RelType.SubOf, Direction.INCOMING)
+//				.relationships(RelType.is, Direction.INCOMING)
+//				.evaluator(new Evaluator() {
+//					@Override
+//					public Evaluation evaluate(Path path) {
+//						Node end = path.endNode();
+//						boolean get = end.hasLabel(node_labels.DUALINDIVIDUAL);
+//						boolean includes = get;
+//						
+//						if(get && object_restrict != null) {
+//							includes = object_restrict.containsKey(end.getId());
+//						}
+//						return Evaluation.of(includes, !get);
+//					}
+//				});
+//		
+//		Traverser traverser = td.traverse(role);
+//		
+//		for(Path p : traverser) {
+//			Iterator<Node> reverseNodes = p.reverseNodes().iterator();
+//			long endid = reverseNodes.next().getId();
+//			long beforeEndid = reverseNodes.next().getId();
+//			
+//			Set<Long> assertionNodes = instances.get(endid);
+//			if(assertionNodes == null) {
+//				Set<Long> _assertionNodes = new HashSet<>();
+//				_assertionNodes.add(beforeEndid);
+//				instances.put(endid, _assertionNodes);
+//			}
+//			else assertionNodes.add(beforeEndid);
+//		}
+//		
+//		for(Long key: instances.keySet()) {
+//			instances.get(key).addAll(restrict.get(key));
+//		}
+//		
+//		return instances;		
+//	}
 	
 	private Map<Long, Set<Long>> getSubsumedInstances(Node concept, Map<Long, Set<Long>> restrict) {
 		Map<Long, Set<Long>> instances = new HashMap<>();

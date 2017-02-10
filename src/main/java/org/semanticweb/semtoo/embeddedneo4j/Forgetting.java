@@ -181,7 +181,7 @@ public class Forgetting {
 		try(Transaction tx = db.beginTx()) {
 			Map<String, Object> param = new HashMap<>();
 			param.put("iri", classIRI);
-			param.put("neg", SemtooDatabase.NEG_PREFIX);
+			param.put("neg", StDatabase.NEG_PREFIX);
 			db.execute(execString, param);
 			
 			tx.success();

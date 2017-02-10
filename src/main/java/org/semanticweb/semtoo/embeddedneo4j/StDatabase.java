@@ -12,28 +12,28 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.graphdb.schema.Schema;
-import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.RelType;
-import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.node_labels;
-import org.semanticweb.semtoo.embeddedneo4j.SemtooDatabaseMeta.property_key;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.RelType;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.node_labels;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.property_key;
 import org.semanticweb.semtoo.util.Helper;
 
-public class SemtooDatabase {
+public class StDatabase {
 	private GraphDatabaseService graphdb;
 	
 	public static final String NEG_PREFIX = "neg_";
 	public static final String INV_PREFIX = "inv_";
 	public static final String PRT_PREFIX = "prt_";
 	
-	private static Map<String, SemtooDatabase> databases = new HashMap<>();
+	private static Map<String, StDatabase> databases = new HashMap<>();
 	
-	private SemtooDatabase(String pathtoDB) {
+	private StDatabase(String pathtoDB) {
 	//	graphdb = new GraphDatabaseFactory().newEmbeddedDatabase(new File(pathtoDB));
 		graphdb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(new File(pathtoDB))
 											.setConfig(GraphDatabaseSettings.pagecache_memory, "6g").newGraphDatabase();
 //		registerShutDownHook(graphdb);
 	}
 	
-	public static synchronized SemtooDatabase getDatabase(String pathtoDB, boolean clean) {
+	public static synchronized StDatabase getDatabase(String pathtoDB, boolean clean) {
 		if(clean) {
 			File _db = new File(pathtoDB);
 			if(_db.exists()) {
@@ -43,9 +43,9 @@ public class SemtooDatabase {
 			}
 		}
 			
-		SemtooDatabase db = databases.get(pathtoDB);
+		StDatabase db = databases.get(pathtoDB);
 		if(db == null) {
-			db = new SemtooDatabase(pathtoDB);
+			db = new StDatabase(pathtoDB);
 			if(clean) db.initialize();
 			databases.put(pathtoDB, db);
 		}
