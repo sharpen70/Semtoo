@@ -4,23 +4,33 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
-public class StTraversalResult {
+public class StAnswers {
 	public int colNum;
 	public Map<Integer, Integer> colMap;
 	public List<long[]>  result;
 	
 	
-	public StTraversalResult(int... cols) {
+	public StAnswers(Map<Integer, Integer> _colMap) {
+		colNum = _colMap.size();
+		colMap = _colMap;
+		
+		result = new ArrayList<>();
+	}
+	
+	public StAnswers(int... cols) {
 		colNum = cols.length;
 		colMap = new HashMap<>();
 		
 		for(int i : cols) {
 			colMap.put(cols[i], i);
 		}
+		
+		result = new ArrayList<>();
 	}
 	
-	public void add(long... ids) {
+	public void add(long[] ids) {
 		if(ids.length < colNum) throw new RuntimeException("Require " + colNum + " param");
 		long[] entry = new long[colNum];
 		
@@ -31,20 +41,24 @@ public class StTraversalResult {
 		result.add(entry);
 	}
 	
-	public StTraversalResult hashJoin(StTraversalResult M, int[] ons) {
+	public StAnswers hashJoin(StAnswers M, int[] ons) {
 		Map<long[], List<long[]>> hashtable = new HashMap<>();
 		
-		Map<Integer, Integer> newColMap = new HashMap<>();
-		int index = 0;
-		for(int i : colMap.keySet()) newColMap.put(i, index++);
-		for(int i : M.colMap.keySet()) if(newColMap.get(i) == null) {newColMap.put(i, index++);}
+		int begin = colMap.size();
+		int[] extra = new int[M.colMap.size()];
+		int extra_size = 0;
 		
-		StTraversalResult joinResult = new StTraversalResult();
+		for(Entry<Integer, Integer> e : M.colMap.entrySet()) if(colMap.get(e.getKey()) == null) {
+			colMap.put(e.getKey(), begin++);
+			extra[extra_size++] = e.getValue();
+		}
+
+		StAnswers joinResult = new StAnswers(colMap);
 				
 		for(long[] row : result) {
 			long[] colon = new long[ons.length];
 			for(int i = 0; i < ons.length; i++) colon[i] = row[colMap.get(ons[i])];
-			List<long[]> rows = hashtable.getOrDefault(colon, new ArrayList<>());
+			List<long[]> rows = hashtable.putIfAbsent(colon, new ArrayList<>());
 			rows.add(row);
 		}
 		
@@ -56,7 +70,13 @@ public class StTraversalResult {
 			List<long[]> rows = hashtable.get(colon);
 			
 			if(rows != null) {
-				
+				for(long[] _row : rows) {
+					long[] merge = new long[colMap.size()];
+					int j;
+					for(j = 0; j < _row.length; j++) merge[j] = _row[j];
+					for(int i = 0; i < extra_size; i++) merge[j++] = row[extra[i]];
+					joinResult.add(merge);
+				}
 			}
 		}
 		

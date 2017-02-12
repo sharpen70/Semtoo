@@ -14,12 +14,12 @@ import org.semanticweb.semtoo.graph.GraphNode.NODE_LABEL;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;
 import org.semanticweb.semtoo.neo4j.Neo4jUpdate;
 
-public class Forgetting {
+public class Forgetting_old {
 	private Neo4jManager manager = null;
 	
 	private static final String THING_IRI = OWLManager.getOWLDataFactory().getOWLThing().toStringID();
 	
-	public Forgetting() {
+	public Forgetting_old() {
 		manager = Neo4jManager.getManager();
 	}
 	

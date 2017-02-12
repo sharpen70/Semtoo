@@ -27,16 +27,16 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLPairwiseVoidVisitor;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
-import org.semanticweb.semtoo.embeddedneo4j.StDatabase;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseBuilder;
 import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.node_labels;
 import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.property_key;
 import org.semanticweb.semtoo.util.DLliteFilter;
 
 public class OWLTransfer {
-	private StDatabase db;
+	private StDatabaseBuilder db;
 	private OWLOntology o;
 	
-	public OWLTransfer(OWLOntology _o, StDatabase _db) {
+	public OWLTransfer(OWLOntology _o, StDatabaseBuilder _db) {
 		o = _o;
 		db = _db;
 	}
@@ -363,14 +363,14 @@ public class OWLTransfer {
 	
 	private static String getPropertyIRI(OWLObjectPropertyExpression exp) {
 		String piri = exp.getNamedProperty().toStringID();
-		if(exp instanceof OWLObjectInverseOf) return StDatabase.getInverseStringiri(piri);
+		if(exp instanceof OWLObjectInverseOf) return StDatabaseBuilder.getInverseStringiri(piri);
 		else return piri;
 	}
 	
 	private static String getPRClassIRI(OWLObjectPropertyExpression exp) {
 		String piri = exp.getNamedProperty().toStringID();
-		if(exp instanceof OWLObjectInverseOf) return StDatabase.getPRStringiri(StDatabase.getInverseStringiri(piri));
-		else return StDatabase.getPRStringiri(piri);	
+		if(exp instanceof OWLObjectInverseOf) return StDatabaseBuilder.getPRStringiri(StDatabaseBuilder.getInverseStringiri(piri));
+		else return StDatabaseBuilder.getPRStringiri(piri);	
 	}
 	
 	private OWLClassExpressionVisitorEx<String> getExpIRI = new OWLClassExpressionVisitorEx<String>() {
@@ -381,8 +381,8 @@ public class OWLTransfer {
 		public String visit(OWLObjectSomeValuesFrom svf) {
 			OWLObjectPropertyExpression exp = svf.getProperty();
 			
-			if(exp instanceof OWLObjectProperty) return StDatabase.getPRStringiri(exp.getNamedProperty().toStringID());
-			else return StDatabase.getPRStringiri(StDatabase.getInverseStringiri(exp.getNamedProperty().toStringID()));
+			if(exp instanceof OWLObjectProperty) return StDatabaseBuilder.getPRStringiri(exp.getNamedProperty().toStringID());
+			else return StDatabaseBuilder.getPRStringiri(StDatabaseBuilder.getInverseStringiri(exp.getNamedProperty().toStringID()));
 		}
 	};
 }

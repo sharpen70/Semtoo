@@ -1,6 +1,6 @@
 package org.semanticweb.semtoo.examples;
 
-import org.semanticweb.semtoo.IAR;
+import org.semanticweb.semtoo.IAR_old;
 import org.semanticweb.semtoo.exception.QueryCreateException;
 import org.semanticweb.semtoo.model.CQuery;
 
@@ -32,7 +32,7 @@ public class TestQueryAnswering {
 			
 //			CQuery q1 = new CQuery("Q(?0, ?1) <- R(?0, ?1), B(?0)", TestForgetting._prefix + "#"); 
 //			System.out.println(q1);
-			IAR qa = new IAR();
+			IAR_old qa = new IAR_old();
 			
 			System.out.println("Detecting conflicts...");
 			long start = System.currentTimeMillis();

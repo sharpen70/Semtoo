@@ -14,8 +14,8 @@ import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.semtoo.embeddedneo4j.Forgetting;
-import org.semanticweb.semtoo.embeddedneo4j.IAR;
+import org.semanticweb.semtoo.FG;
+import org.semanticweb.semtoo.IAR;
 
 public class ForgettingPerformance {
 	public static final String[] testcases_small = {"u1p0", "u1p15e-4", "u1p5e-2", "u1p2e-1", "u5p0", "u5p15e-4", "u5p5e-2", "u5p2e-1"};
@@ -26,47 +26,55 @@ public class ForgettingPerformance {
 	private static final String result = "./result/ic_f/";
 	
 	public static void main(String[] args) throws OWLOntologyCreationException, IOException {
-		GraphDatabaseService db = new GraphDatabaseFactory()
-				.newEmbeddedDatabaseBuilder(new File(data_path + "u5p2e-1.db"))
-				.setConfig(GraphDatabaseSettings.pagecache_memory, "4g")
-				.newGraphDatabase();
+		String fg_file = null;
+		String database = null;
 		
-		IAR iar = new IAR(db);
+		for(int i = 0; i < args.length; i++) {
+			if(args[i].equals("-fg")) fg_file = args[++i];
+			if(args[i].equals("-db")) database = args[++i];
+		}
 		
-		long start = System.currentTimeMillis();
-		iar.traversal();
-		long end = System.currentTimeMillis();
-		System.out.println("Remove conflicts with " + (end - start) + " ms");
-//		singleTest("u5p2e-1", concepts_path + "degree/degree_100");
+		if(fg_file == null) { System.out.println("File of concepts to forget needed"); return; }
+		if(database == null) { System.out.println("no databate provided"); return; }
+		
+		System.out.println("Forgetting " + new File(fg_file).getName() + " with " + new File(database).getName());
+		singleTest(database, fg_file);
 	}
 	
-	public static void singleTest(String testowl, String testconcept) throws IOException {
+	public static void singleTest(String testdb, String testconcept) throws IOException {
 		File c = new File(testconcept);
-		File database = new File(data_path + testowl + ".db");
-		File tmp_database = new File(data_path + testowl + "_temp.db");
+		File database = new File(testdb);
+		File tmp_database = new File(database.getParentFile().getAbsolutePath() + "/temp_" + database.getName());
 		
+		long start = System.currentTimeMillis();
 		FileUtils.copyDirectory(database, tmp_database);
+		long end = System.currentTimeMillis();
+		System.out.println("copy with " + (end - start) + " ms");
 		
 		List<String> concepts = readConcepts(c);
 		
+		start = System.currentTimeMillis();
 		GraphDatabaseService db = new GraphDatabaseFactory()
 				.newEmbeddedDatabaseBuilder(tmp_database)
 				.setConfig(GraphDatabaseSettings.pagecache_memory, "4g")
 				.newGraphDatabase();
+		end = System.currentTimeMillis();
+		System.out.println("Start database with " + (end - start) + " ms");
 		
-		Forgetting forgetting = new Forgetting(db);
-		IAR iar = new IAR(db);
+		FG forgetting = new FG(db);
+		IAR iar = new IAR();
 		
-		long start = System.currentTimeMillis();
-		iar.traversal();
-		long end = System.currentTimeMillis();
-		System.out.println("Remove conflicts with " + (end - start) + " ms");
+		start = System.currentTimeMillis();
+		iar.repair(db);
+		end = System.currentTimeMillis();
+		System.out.println("Repair with " + (end - start) + " ms");
 		
-//		start = System.currentTimeMillis();
-//		forgetting.naiveForget(concepts);
-//		end = System.currentTimeMillis();
-//		System.out.println("Done with " + (end - start) + " ms");
+		start = System.currentTimeMillis();
+		forgetting.ofg(concepts);
+		end = System.currentTimeMillis();
+		System.out.println("Forget with " + (end - start) + " ms");
 		
+		db.shutdown();
 		FileUtils.deleteDirectory(tmp_database);
 	}
 	
@@ -102,7 +110,7 @@ public class ForgettingPerformance {
 				long start, end;
 				
 				
-				Forgetting forgetting = new Forgetting(db);
+				FG forgetting = new FG(db);
 				
 				start = System.currentTimeMillis();
 				forgetting.naiveForget(concepts);
@@ -146,7 +154,7 @@ public class ForgettingPerformance {
 	}
 
 	public static long getDBRelSizeNum(GraphDatabaseService db) {
-		Result re = db.execute("MATCH (n)-[r]-(m) return distinct count(r) as num");
+		Result re = db.execute("MATCH (n)-[r]-(m) return count(distinct r) as num");
 		
 		return (long)(re.next().get("num"));
 	}

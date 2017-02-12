@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
-import org.semanticweb.semtoo.embeddedneo4j.StDatabase;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseBuilder;
 import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.node_labels;
 import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.property_key;
 

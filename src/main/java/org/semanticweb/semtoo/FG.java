@@ -1,28 +1,153 @@
-package org.semanticweb.semtoo.embeddedneo4j;
+package org.semanticweb.semtoo;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.traversal.Evaluation;
+import org.neo4j.graphdb.traversal.Evaluator;
+import org.neo4j.graphdb.traversal.TraversalDescription;
+import org.neo4j.graphdb.traversal.Traverser;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseBuilder;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.RelType;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.node_labels;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.property_key;
 import org.semanticweb.semtoo.graph.GraphNode.NODE_KEY;
 import org.semanticweb.semtoo.graph.GraphNode.NODE_LABEL;
 
-public class Forgetting {
+public class FG {
 	private GraphDatabaseService db;
 	
 	private final boolean test = true;
 	
-	private static final String THING_IRI = OWLManager.getOWLDataFactory().getOWLThing().toStringID();
-	
-	public Forgetting(GraphDatabaseService _db) {
+	public FG(GraphDatabaseService _db) {
 		db = _db;
 	}
 	
+	private Node preprocess(String iri) {
+		boolean go = true;
+		Node n;
+		try(Transaction tx = db.beginTx()) {
+			Node NOTHING = db.findNode(node_labels.TBOXENTITY, property_key.NODE_IRI, 
+					StDatabaseBuilder.getNegStringiri(OWLManager.getOWLDataFactory().getOWLThing().toStringID()));
+			
+			n = db.findNode(node_labels.TBOXENTITY, property_key.NODE_IRI, iri);
+			Node neg = db.findNode(node_labels.NEGATION, property_key.NODE_IRI, StDatabaseBuilder.getNegStringiri(iri));
+			
+			for(Relationship rel : n.getRelationships(RelType.SubOf, Direction.OUTGOING)) {
+				if(rel.getEndNode().equals(n)) rel.delete();
+				if(rel.getEndNode().equals(NOTHING)) go = false;
+			}
+			
+			if(go && neg != null) {
+				StDatabaseBuilder builder = new StDatabaseBuilder(db);
+				for(Relationship rel : neg.getRelationships(RelType.SubOf, Direction.INCOMING)) {
+					Node dj = rel.getStartNode();
+					Node neg_dj = builder.createNegationNode(dj.getProperty(property_key.NODE_IRI).toString());
+					n.createRelationshipTo(neg_dj, RelType.SubOf);
+					rel.delete();
+				}
+				neg.delete();
+			}
+			if(!go) {
+				for(Relationship rel : n.getRelationships(RelType.SubOf, Direction.INCOMING)) {
+					Node follower = rel.getEndNode();
+					follower.createRelationshipTo(NOTHING, RelType.SubOf);
+				}
+				try {
+					for(Relationship rel : n.getRelationships()) {
+						rel.delete();
+					}
+					n.delete();
+				} catch(Exception e) { }
+			}
+			tx.success();
+		}
+		if(go) return n;
+		else return null;
+	}
+	
+	public void fg(List<String> iris) {
+		for(String iri : iris) fg(iri);
+	}
+	
+	public void fg(String iri) {
+		Node n = preprocess(iri);
+		if(n != null) {
+			try(Transaction tx = db.beginTx()) {
+				for(Relationship inRel : n.getRelationships(RelType.SubOf, Direction.INCOMING)) {
+					for(Relationship outRel : n.getRelationships(RelType.SubOf, Direction.OUTGOING)) {
+						Node start = inRel.getStartNode();
+						Node end = outRel.getEndNode();
+						if(start.hasLabel(node_labels.INDIVIDUAL))
+							start.createRelationshipTo(end, RelType.is);
+						else 
+							start.createRelationshipTo(end, RelType.SubOf);
+						outRel.delete();
+					}
+					inRel.delete();
+				}
+				tx.success();
+			}
+		}
+	}
+	
+	public void ofg(List<String> iris) {
+		Set<Node> tofg = new HashSet<>();
+		for(String iri : iris) {
+			Node n = preprocess(iri);
+			if(n != null) tofg.add(n);
+		}
+		try(Transaction tx = db.beginTx()) {
+			Evaluator eval = new Evaluator() {
+				@Override
+				public Evaluation evaluate(Path path) {
+					Node n = path.endNode();
+					boolean includes = tofg.contains(n);
+					return Evaluation.of(includes, !includes);
+				}
+			};
+			TraversalDescription td = db.traversalDescription()
+					.relationships(RelType.SubOf, Direction.OUTGOING)
+					.evaluator(eval);
+			
+			Traverser traverser = td.traverse(tofg);
+			for(Path p : traverser) {
+				Node start = p.startNode();
+				Node end = p.endNode();
+				for(Relationship rel : start.getRelationships(Direction.INCOMING)) {
+					Node new_start = rel.getStartNode();
+					if(!tofg.contains(new_start)) {
+						if(new_start.hasLabel(node_labels.INDIVIDUAL))
+							new_start.createRelationshipTo(end, RelType.is);
+						else
+							new_start.createRelationshipTo(end, RelType.SubOf);
+					}
+				}
+			}
+			tx.success();
+		}
+		
+		try(Transaction tx = db.beginTx()) {
+			for(Node n : tofg) {
+				for(Relationship rel : n.getRelationships()) rel.delete();
+				n.delete();
+			}
+			tx.success();
+		}
+	}
 	//Forgets a set of concepts
 	
 	//Forgets a set of concepts simply one by one
@@ -140,7 +265,6 @@ public class Forgetting {
 		try(Transaction tx = db.beginTx()) {
 			Map<String, Object> param = new HashMap<>();
 			param.put("iri", classIRI);
-			param.put("thing_iri", THING_IRI);
 			Result result = db.execute(execString, param);
 			if(result.hasNext()) return true;
 		}
@@ -161,7 +285,6 @@ public class Forgetting {
 			
 			Map<String, Object> param = new HashMap<>();
 			param.put("biri", classIRI);
-			param.put("thing_iri", THING_IRI);
 			db.execute(exec, param);
 			
 			tx.success();
@@ -181,7 +304,7 @@ public class Forgetting {
 		try(Transaction tx = db.beginTx()) {
 			Map<String, Object> param = new HashMap<>();
 			param.put("iri", classIRI);
-			param.put("neg", StDatabase.NEG_PREFIX);
+			param.put("neg", StDatabaseBuilder.NEG_PREFIX);
 			db.execute(execString, param);
 			
 			tx.success();

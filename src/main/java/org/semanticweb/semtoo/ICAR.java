@@ -1,8 +1,16 @@
 package org.semanticweb.semtoo;
 
-public class ICAR implements ICTolerant_QA {
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.semanticweb.semtoo.model.CQuery;
+
+public class ICAR implements ICQA {
 	@Override
-	public void consistentBase() {
+	public void answer(CQuery q) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void repair(GraphDatabaseService db) {
 		// TODO Auto-generated method stub
 		
 	}

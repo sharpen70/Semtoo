@@ -16,24 +16,31 @@
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
-              <mainClass>org.semanticweb.semtoo.</mainClass>
+              <classpathPrefix>lib/</classpathPrefix>
             </manifest>
           </archive>
         </configuration>		
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>1.6</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+	    <groupId>org.apache.maven.plugins</groupId>
+	    <artifactId>maven-dependency-plugin</artifactId>
+	    <version>2.1</version>
+	    <executions>
+	     <execution>
+	      <id>copy-dependencies</id>
+	      <phase>package</phase>
+	      <goals>
+	       <goal>copy-dependencies</goal>
+	      </goals>
+	      <configuration>
+	       <outputDirectory>${project.build.directory}/lib</outputDirectory>
+	       <overwritereleases>false</overwritereleases>
+	       <overwritesnapshots>false</overwritesnapshots>
+	       <overwriteifnewer>true</overwriteifnewer>
+	      </configuration>
+	     </execution>
+	    </executions>
+	   </plugin>
   	</plugins>
   </build>
   <dependencies>
@@ -60,6 +67,11 @@
 	  <version>1.1.0</version>
 	  <scope>compile</scope>
     </dependency>
+    <dependency>
+	    <groupId>org.slf4j</groupId>
+	    <artifactId>slf4j-simple</artifactId>
+	    <version>1.7.22</version>
+	</dependency>
   </dependencies>
    <properties>
     <maven.compiler.source>1.8</maven.compiler.source>

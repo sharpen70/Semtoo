@@ -1,9 +1,9 @@
 package org.semanticweb.semtoo.embeddedneo4j;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.neo4j.graphdb.Direction;
@@ -24,20 +24,6 @@ public class StTraversal {
 	
 	public StTraversal(GraphDatabaseService _db) {
 		db = _db;
-	}
-	
-	private void hashjoin(HashSet<Long> left, HashSet<Long> right) {
-		Set<Long> loopset = left;
-		Set<Long> checkset = right;
-		
-		if(right.size() > right.size()) {
-			loopset = right;
-			checkset = left;
-		}
-		
-		for(Long id : loopset) {
-			if(!checkset.contains(id)) left.remove(id);
-		}
 	}
 	
 	public TraversalDescription getTargetTraDes(Label target_label) {
@@ -68,7 +54,6 @@ public class StTraversal {
 			instances.add(endid);
 		}
 		
-		hashjoin(restrict, instances);
 	}
 	
 	public void getRoleInstances(Node atom, Set<Long> object_restrict, 
@@ -91,8 +76,23 @@ public class StTraversal {
 		
 	}
 	
-	public Map<Long, Set<Long>> getSourceAssertions(Node concept, Map<Long, Set<Long>> restrict) {
-		Map<Long, Set<Long>> assertions = new HashMap<>();
+	public Map<Long, Set<Long>> assertionsInnerJoin(Map<Long, Set<Long>> a, Map<Long, Set<Long>> b) {
+		Map<Long, Set<Long>> M, S;
+		if(a.size() < b.size()) { S = a; M = b;}
+		else { S = b; M = a;}
+		
+		for(Entry<Long, Set<Long>> e : S.entrySet()) {
+			Set<Long> v = M.get(e.getKey());
+			
+			if(v != null) e.getValue().addAll(v);
+			else S.remove(e.getKey());
+		}
+		
+		return S;
+	}
+	
+	public StAssertions getSourceAssertions(Node concept) {
+		StAssertions assertions = new StAssertions();
 		Label target_label = node_labels.INDIVIDUAL;
 		if(concept.hasLabel(node_labels.PROPERTY)) target_label = node_labels.DUALINDIVIDUAL;
 		
@@ -101,21 +101,12 @@ public class StTraversal {
 		Traverser traverser = td.traverse(concept);
 		
 		for(Path p : traverser) {
-			Iterator<Node> reverseNodes = p.reverseNodes().iterator();
-			long endid = reverseNodes.next().getId();
-			long beforeEndid = reverseNodes.next().getId();
+			Long endId = p.endNode().getId();
+			Long lastRelId = p.lastRelationship().getId();
 			
-			Set<Long> assertionNodes = assertions.get(endid);
-			if(assertionNodes == null) {
-				Set<Long> _assertionNodes = new HashSet<>();
-				_assertionNodes.add(beforeEndid);
-				assertions.put(endid, _assertionNodes);
+			if(!lastRelId.equals(null)) {
+				assertions.add(endId, lastRelId);
 			}
-			else assertionNodes.add(beforeEndid);
-		}
-		
-		for(Long key: assertions.keySet()) {
-			assertions.get(key).addAll(restrict.get(key));
 		}
 		
 		return assertions;
