@@ -18,7 +18,6 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.PrefixManager;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
-import org.semanticweb.semtoo.Forgetting_old;
 import org.semanticweb.semtoo.graph.GraphAnalyzer;
 import org.semanticweb.semtoo.graph.GraphAnalyzer.ORDER;
 import org.semanticweb.semtoo.neo4j.Neo4jManager;

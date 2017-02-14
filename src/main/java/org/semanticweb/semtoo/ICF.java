@@ -4,24 +4,22 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.FileUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.ResourceIterable;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.RelType;
+import org.semanticweb.semtoo.embeddedneo4j.StDatabaseMeta.node_labels;
 
 public class ICF {
-	private GraphDatabaseService db;
 	private ICQA icqa;
 	
 	public ICF(ICQA ic) {
@@ -94,15 +92,39 @@ public class ICF {
 		long start = System.currentTimeMillis();
 		iar.repair(db);
 		long end = System.currentTimeMillis();
-		System.out.println("Repair with " + (end - start) + " ms");
+		long repair_time = end - start;
 		
 		start = System.currentTimeMillis();
 		forgetting.ofg(concepts);
 		end = System.currentTimeMillis();
-		System.out.println("Forget with " + (end - start) + " ms");
+		long forget_time = end - start;
+		
+		System.out.println("Repair with " + repair_time + " ms, Forget with " + forget_time + " ms");
+		
+		Map<String, Integer> meta = calMeta(db);
+		System.out.println("Ontology result size tbox: " + meta.get("tbox") + ", abox: " + meta.get("abox"));
 		
 		db.shutdown();
 		FileUtils.deleteDirectory(tmp_database);
+	}
+	
+	public static Map<String, Integer> calMeta(GraphDatabaseService db) {
+		
+		Map<String, Integer> re = new HashMap<>();
+		try(Transaction tx = db.beginTx()) {
+			int tbox = 0, abox = 0;
+			ResourceIterable<Relationship> origin_relationships = db.getAllRelationships();
+			for(Relationship rel : origin_relationships) {
+				if(rel.isType(RelType.is)) {
+					if(!rel.getEndNode().hasLabel(node_labels.PROPERTY_CLASS)) abox++;
+				}
+				else tbox++;
+			}
+			
+			re.put("tbox", tbox);
+			re.put("abox", abox);	
+		}
+		return re;
 	}
 	
 	private static List<String> readConcepts(File f) throws FileNotFoundException {

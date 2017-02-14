@@ -1,6 +1,7 @@
 package org.semanticweb.semtoo;
 
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Transaction;
 import org.semanticweb.semtoo.model.CQuery;
 
 public class ICAR implements ICQA {
@@ -11,7 +12,8 @@ public class ICAR implements ICQA {
 	}
 	@Override
 	public void repair(GraphDatabaseService db) {
-		// TODO Auto-generated method stub
-		
+		try(Transaction tx = db.beginTx()) {
+			
+		}
 	}
 }
