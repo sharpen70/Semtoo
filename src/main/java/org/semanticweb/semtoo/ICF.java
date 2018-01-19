@@ -86,7 +86,7 @@ public class ICF {
 				.setConfig(GraphDatabaseSettings.pagecache_memory, "4g")
 				.newGraphDatabase();
 		
-		FG forgetting = new FG(db);
+		SFG forgetting = new SFG(db);
 		IAR iar = new IAR();
 		
 		long start = System.currentTimeMillis();

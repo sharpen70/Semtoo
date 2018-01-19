@@ -14,6 +14,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Resource;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -35,6 +36,46 @@ public class IAR implements ICQA{
 	private static final boolean test = false;
 	
 	public IAR() {
+	}
+	
+	public Map<Long, Set<Long>> conf(GraphDatabaseService db) {
+		Map<Long, Set<Long>> result = null;
+		
+		return result;
+	}
+	
+	
+	public Map<Long, Set<Long>> confs(GraphDatabaseService db) {
+		Map<Long, Set<Long>> result = new HashMap<>();
+		
+		try(Transaction tx = db.beginTx()) {
+			ResourceIterator<Node> negs = db.findNodes(node_labels.NEGATION);
+			StTraversal tv = new StTraversal(db);
+			
+			while(negs.hasNext()) {
+				Node neg = negs.next();
+				Node p = db.findNode(node_labels.TBOXENTITY, property_key.NODE_IRI, neg.getProperty(property_key.POSITIVE_NODE_IRI));
+				StAssertions lead2neg = tv.getSourceAssertions(neg);
+				StAssertions lead2p = tv.getSourceAssertions(p);
+				
+				Map<Long, Set<Long>> join = StAssertions.assertionsInnerJoin(lead2neg, lead2p);
+			
+			
+				for(Entry<Long, Set<Long>> e : join.entrySet()) {
+					Set<Long> S = result.get(e.getKey());
+					if(S == null) {
+						result.put(e.getKey(), e.getValue());
+					}
+					else {
+						S.addAll(e.getValue());
+					}
+				}
+			}
+			
+			tx.success();
+		}
+		
+		return result;
 	}
 	
 	@Override

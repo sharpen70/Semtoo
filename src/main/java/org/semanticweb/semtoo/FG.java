@@ -28,7 +28,7 @@ import org.semanticweb.semtoo.graph.GraphNode.NODE_KEY;
 import org.semanticweb.semtoo.graph.GraphNode.NODE_LABEL;
 
 public class FG {
-	private GraphDatabaseService db;
+	public GraphDatabaseService db;
 	
 	private final boolean test = true;
 	
@@ -36,7 +36,7 @@ public class FG {
 		db = _db;
 	}
 	
-	private Node preprocess(String iri) {
+	public Node preprocess(String iri) {
 		boolean go = true;
 		Node n;
 		try(Transaction tx = db.beginTx()) {
@@ -46,11 +46,15 @@ public class FG {
 			n = db.findNode(node_labels.TBOXENTITY, property_key.NODE_IRI, iri);
 			Node neg = db.findNode(node_labels.NEGATION, property_key.NODE_IRI, StDatabaseBuilder.getNegStringiri(iri));
 			
+			//Remove Tbox Axiom of form SubClassOf(A, A) 
 			for(Relationship rel : n.getRelationships(RelType.SubOf, Direction.OUTGOING)) {
 				if(rel.getEndNode().equals(n)) rel.delete();
+				
+				//Check if the given class A has axiom of form Disjoint(A, A)
 				if(rel.getEndNode().equals(NOTHING)) go = false;
 			}
 			
+			//Given class A to forget, change all B -> ~A to A -> ~B
 			if(go && neg != null) {
 				StDatabaseBuilder builder = new StDatabaseBuilder(db);
 				for(Relationship rel : neg.getRelationships(RelType.SubOf, Direction.INCOMING)) {
@@ -61,6 +65,8 @@ public class FG {
 				}
 				neg.delete();
 			}
+			
+			//Remove the contradiction class and make its subclasses contradiction class
 			if(!go) {
 				for(Relationship rel : n.getRelationships(RelType.SubOf, Direction.INCOMING)) {
 					Node follower = rel.getEndNode();
@@ -148,6 +154,8 @@ public class FG {
 			tx.success();
 		}
 	}
+	
+	
 	//Forgets a set of concepts
 	
 	//Forgets a set of concepts simply one by one
