@@ -155,7 +155,6 @@ public class FG {
 		}
 	}
 	
-	
 	//Forgets a set of concepts
 	
 	//Forgets a set of concepts simply one by one

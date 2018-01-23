@@ -91,6 +91,20 @@ public class StTraversal {
 		return S;
 	}
 	
+	public StAssertions getSourcePath(Node concept) {
+		StAssertions assertions = new StAssertions();
+		TraversalDescription td = getTargetTraDes(node_labels.INDIVIDUAL);
+		
+		Traverser traverser = td.traverse(concept);
+		
+		for(Path p : traverser) {
+			Long endId = p.endNode().getId();	
+			assertions.add(endId, p);
+		}
+		
+		return assertions;
+	}
+	
 	public StAssertions getSourceAssertions(Node concept) {
 		StAssertions assertions = new StAssertions();
 		Label target_label = node_labels.INDIVIDUAL;

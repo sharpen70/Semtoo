@@ -45,7 +45,7 @@ public class ICF {
 		if(database == null) { System.out.println("no databate provided"); return; }
 		
 		System.out.println("Forgetting " + new File(database).getName() + " with " + new File(fg_file).getName());
-		singleTest(database, fg_file);
+		singleTest_ufg(database, fg_file);
 		
 //		final ExecutorService exec = Executors.newFixedThreadPool(1);
 //		
@@ -72,6 +72,35 @@ public class ICF {
 //		}
 	}
 	
+	public static void singleTest_ufg(String testdb, String testconcept) throws IOException {
+		File c = new File(testconcept);
+		File database = new File(testdb);
+		File tmp_database = new File("temp_" + database.getName());
+		
+		FileUtils.copyDirectory(database, tmp_database);
+		
+		List<String> concepts = readConcepts(c);
+		
+		GraphDatabaseService db = new GraphDatabaseFactory()
+				.newEmbeddedDatabaseBuilder(tmp_database)
+				.setConfig(GraphDatabaseSettings.pagecache_memory, "4g")
+				.newGraphDatabase();
+		
+		UFG forgetting = new UFG(db);
+		
+		long start = System.currentTimeMillis();
+		boolean result = forgetting.ufg(concepts);
+		long end = System.currentTimeMillis();
+		
+		System.out.println("Success:" + result + " Forget with " + (end - start) + " ms");
+		
+		Map<String, Integer> meta = calMeta(db);
+		System.out.println("Ontology result size tbox: " + meta.get("tbox") + ", abox: " + meta.get("abox"));
+		
+		db.shutdown();
+		FileUtils.deleteDirectory(tmp_database);
+	}
+	
 	public static void singleTest(String testdb, String testconcept) throws IOException {
 		File c = new File(testconcept);
 		File database = new File(testdb);
@@ -86,7 +115,7 @@ public class ICF {
 				.setConfig(GraphDatabaseSettings.pagecache_memory, "4g")
 				.newGraphDatabase();
 		
-		SFG forgetting = new SFG(db);
+		FG forgetting = new FG(db);
 		IAR iar = new IAR();
 		
 		long start = System.currentTimeMillis();
